@@ -13,27 +13,13 @@ def call(body) {
     def DEPLOYMENT = 'deployment'
     def templateFiles = [:]
 
-    if (config.templatePath?.trim()) {
-        def jsonParser = new JsonSlurperClassic()
-        def templateDir = new File(config.templatePath)
-        try {
-            templateDir.eachFileRecurse(FileType.FILES) { file ->
-                switch (file.getName()) {
-                    case "${SERVICE}.json":
-                        templateFiles[SERVICE] = jsonParser.parseText(file.text)
-                        println "Using template file: ${SERVICE}.json"
-                        break
-                    case "${DEPLOYMENT}.json":
-                        templateFiles[DEPLOYMENT] = jsonParser.parseText(file.text)
-                        println "Using template file: ${DEPLOYMENT}.json"
-                        break
-                }
-            }
-        } catch(FileNotFoundException e) {
-            println "templatePath does not exist"
-        } catch (IllegalArgumentException e) {
-            println "Could not read files in templatePath: ${e.getMessage()}"
-        }
+    if (config.serviceTemplate?.trim()) {
+      templateFiles[SERVICE] = loadTemplate(config.serviceTemplate)
+      println "Loaded partial service template"
+    }
+    if (config.deploymentTemplate?.trim()) {
+      templateFiles[DEPLOYMENT] = loadTemplate(config.deploymentTemplate)
+      println "Loaded partial deployment template"
     }
 
     def kubernetesObjects = []
@@ -41,6 +27,14 @@ def call(body) {
     kubernetesObjects << generateDeploymentJson(config, env, templateFiles[DEPLOYMENT] ?: null)
 
     return createKubernetesList(kubernetesObjects)
+}
+
+def loadTemplate(templateFile) {
+    try {
+        return new JsonSlurperClassic().parseText(templateFile)
+    } catch (Exception e) {
+        println "Something went wrong parsing template: ${e.getMessage()}"
+    }
 }
 
 def createKubernetesList(kubernetesObjects) {
