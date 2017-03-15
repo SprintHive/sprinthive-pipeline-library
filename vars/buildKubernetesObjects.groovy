@@ -94,8 +94,6 @@ def generateServiceJson(config, env, partialTemplate = null) {
             ],
 						"selector": {
 								"project": "${env.JOB_NAME}",
-								"expose": "${config.expose ?: 'true'}",
-								"version": "${config.version}"
 						},
 						"type": "ClusterIP",
 						"sessionAffinity": "None"
