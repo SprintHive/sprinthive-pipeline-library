@@ -1,32 +1,37 @@
-#!/usr/bin/groovy
 import io.fabric8.Fabric8Commands
+import io.fabric8.Utils
 
 def call(body) {
     // evaluate the body block, and collect configuration into the object
-    def config = [version:'']
+    def config = [version: '']
     body.resolveStrategy = Closure.DELEGATE_FIRST
     body.delegate = config
     body()
 
-    def newVersion = ''
-    if (config.version == '') {
-        newVersion = getNewVersion {}
-    } else {
-        newVersion = config.version
+    container('clients') {
+        def newVersion = config.version
+        if (newVersion == '') {
+            newVersion = getNewVersion {}
+        }
+
+        env.setProperty('VERSION', newVersion)
+
+        dockerBuild(newVersion)
+
+        return newVersion
     }
+}
 
-    def flow = new io.fabric8.Fabric8Commands()
+def dockerBuild(version){
+    def utils = new Utils()
+    def flow = new Fabric8Commands()
+    def namespace = utils.getNamespace()
+    def newImageName = "${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${config.name}:${version}"
 
-    env.setProperty('VERSION',newVersion)
-
-    kubernetes.image().withName("${config.name}").build().fromPath(".")
-    kubernetes.image().withName("${config.name}").tag().inRepository("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${env.KUBERNETES_NAMESPACE}/${config.name}").withTag(newVersion)
-
-    if (flow.isSingleNode()){
-        echo 'Running on a single node, skipping docker push as not needed'
+    sh "docker build -t ${newImageName} ."
+    if (flow.isSingleNode()) {
+        sh "echo 'Running on a single node, skipping docker push as not needed'"
     } else {
-        kubernetes.image().withName("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${env.KUBERNETES_NAMESPACE}/${config.name}").push().withTag(newVersion).toRegistry()
+        sh "docker push ${newImageName}"
     }
-
-    return newVersion
-  }
+}
