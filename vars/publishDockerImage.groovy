@@ -16,17 +16,17 @@ def call(body) {
 
         env.setProperty('VERSION', newVersion)
 
-        dockerBuild(newVersion)
+        dockerBuild(newVersion, config.name)
 
         return newVersion
     }
 }
 
-def dockerBuild(version){
+def dockerBuild(version, name){
     def utils = new Utils()
     def flow = new Fabric8Commands()
     def namespace = utils.getNamespace()
-    def newImageName = "${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${config.name}:${version}"
+    def newImageName = "${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
 
     sh "docker build -t ${newImageName} ."
     if (flow.isSingleNode()) {
