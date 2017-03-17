@@ -1,4 +1,6 @@
 #!/usr/bin/groovy
+@Library('github.com/fabric8io/fabric8-pipeline-library@v2.2.311')
+
 def call(body) {
     // evaluate the body block, and collect configuration into the object
     def config = [version:'']
