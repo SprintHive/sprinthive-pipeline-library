@@ -128,7 +128,8 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
             "name": "${env.JOB_NAME}",
 						"labels": {
 								"project": "${env.JOB_NAME}",
-								"version": "${config.version}"
+								"version": "${config.version}",
+								"stage": "${config.stage}"
 						}
 				},
 				"spec": {
@@ -142,7 +143,8 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
             "metadata": {
               "labels": {
                 "project": "${env.JOB_NAME}",
-                "version": "${config.version}"
+                "version": "${config.version}",
+								"stage": "${config.stage}"
               }
             },
             "spec": {
