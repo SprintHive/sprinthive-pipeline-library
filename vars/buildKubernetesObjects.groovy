@@ -77,9 +77,9 @@ def generateServiceJson(config, env, partialTemplate = null) {
 				"kind": "Service",
 				"apiVersion": "v1",
 				"metadata": {
-						"name": "${env.JOB_NAME}",
+						"name": "${config.name}",
 						"labels": {
-								"project": "${env.JOB_NAME}",
+								"project": "${config.name}",
 								"expose": "${config.expose ?: 'true'}",
 								"version": "${config.version}"
 						}
@@ -93,7 +93,7 @@ def generateServiceJson(config, env, partialTemplate = null) {
               }
             ],
 						"selector": {
-								"project": "${env.JOB_NAME}",
+								"project": "${config.name}",
 						},
 						"type": "ClusterIP",
 						"sessionAffinity": "None"
@@ -125,9 +125,9 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
 				"kind": "Deployment",
         "apiVersion": "extensions/v1beta1",
 				"metadata": {
-            "name": "${env.JOB_NAME}",
+            "name": "${config.name}",
 						"labels": {
-								"project": "${env.JOB_NAME}",
+								"project": "${config.name}",
 								"version": "${config.version}",
 								"stage": "${config.stage}"
 						}
@@ -136,13 +136,13 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
           "replicas": 1,
           "selector": {
             "matchLabels": {
-              "project": "${env.JOB_NAME}"
+              "project": "${config.name}"
             }
           },
           "template": {
             "metadata": {
               "labels": {
-                "project": "${env.JOB_NAME}",
+                "project": "${config.name}",
                 "version": "${config.version}",
 								"stage": "${config.stage}"
               }
@@ -160,9 +160,9 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
                       }
                     }
                   ],
-                  "image": "${fabric8Registry}${env.KUBERNETES_NAMESPACE}/${env.JOB_NAME}:${config.version}",
+                  "image": "${fabric8Registry}${env.KUBERNETES_NAMESPACE}/${config.name}:${config.version}",
                   "imagePullPolicy": "IfNotPresent",
-                  "name": "${env.JOB_NAME}",
+                  "name": "${config.name}",
                   "ports": [
                     {
                       "containerPort": ${config.port},
