@@ -26,7 +26,7 @@ def dockerBuild(version, name){
     def utils = new Utils()
     def flow = new Fabric8Commands()
     def namespace = utils.getNamespace()
-    def newImageName = "${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
+    def newImageName = "${env.DOCKER_REGISTRY_SERVICE_HOST}:${env.DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
 
     sh "docker build -t ${newImageName} ."
     if (flow.isSingleNode()) {
