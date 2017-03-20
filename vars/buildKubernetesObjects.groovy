@@ -115,9 +115,9 @@ def generateServiceJson(config, env, partialTemplate = null) {
 }
 
 def generateDeploymentJson(config, env, partialTemplate = null) {
-    def fabric8Registry = ''
-    if (env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST){
-        fabric8Registry = env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST+':'+env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT+'/'
+    def dockerRegistry= ''
+    if (env.DOCKER_REGISTRY_SERVICE_HOST){
+        dockerRegistry = env.DOCKER_REGISTRY_SERVICE_HOST+':'+env.DOCKER_REGISTRY_SERVICE_PORT+'/'
     }
 
     def deploymentJson = """
@@ -160,7 +160,7 @@ def generateDeploymentJson(config, env, partialTemplate = null) {
                       }
                     }
                   ],
-                  "image": "${fabric8Registry}${env.KUBERNETES_NAMESPACE}/${config.name}:${config.version}",
+                  "image": "${dockerRegistry}${env.KUBERNETES_NAMESPACE}/${config.name}:${config.version}",
                   "imagePullPolicy": "IfNotPresent",
                   "name": "${config.name}",
                   "ports": [
