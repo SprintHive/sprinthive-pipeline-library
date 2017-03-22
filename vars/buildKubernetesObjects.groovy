@@ -57,11 +57,11 @@ def createKubernetesList(kubernetesObjects) {
 
 def mergeObjectOverrides(jsonObject, jsonObjectOverride) {
     if (jsonObjectOverride instanceof Map) {
-        jsonObjectOverride.each {
-            if (jsonObject.containsKey(it.getKey())) {
-                jsonObject["${it.getKey()}"] = mergeObjectOverrides(jsonObject[it.getKey()], it.getValue())
+      for (String key : jsonObjectOverride.keySet()) {
+            if (jsonObject.containsKey(key)) {
+                jsonObject[key] = mergeObjectOverrides(jsonObject[key], jsonObjectOverride[key])
             } else {
-                jsonObject.put(it.getKey(), it.getValue())
+                jsonObject.put(key, jsonObjectOverride[key])
             }
         }
     } else {

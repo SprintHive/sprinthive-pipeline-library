@@ -28,10 +28,5 @@ def dockerBuild(version, name){
     def namespace = utils.getNamespace()
     def newImageName = "${env.DOCKER_REGISTRY_SERVICE_HOST}:${env.DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
 
-    sh "docker build -t ${newImageName} ."
-    if (flow.isSingleNode()) {
-        sh "echo 'Running on a single node, skipping docker push as not needed'"
-    } else {
-        sh "docker push ${newImageName}"
-    }
+    sh "docker push ${newImageName}"
 }
