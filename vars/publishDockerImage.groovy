@@ -28,5 +28,6 @@ def dockerBuild(version, name){
     def namespace = utils.getNamespace()
     def newImageName = "${env.DOCKER_REGISTRY_SERVICE_HOST}:${env.DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
 
+    sh "docker build -t ${newImageName} ."
     sh "docker push ${newImageName}"
 }
