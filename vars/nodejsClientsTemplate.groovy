@@ -12,7 +12,7 @@ def call(Map parameters = [:], body) {
 
 	podTemplate(label: label, inheritFrom: "${inheritFrom}",
 			containers: [
-					[name: 'client', image: "${clientsImage}", command: 'cat', ttyEnabled: true, privileged: true],
+					[name: 'clients', image: "${clientsImage}", command: 'cat', ttyEnabled: true, privileged: true],
 					[name: 'nodejs', image: "${nodejsImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true,  workingDir: '/home/jenkins/']],
 			volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
 			envVars: [[key: 'DOCKER_HOST', value: 'unix:/var/run/docker.sock'], [key: 'DOCKER_CONFIG', value: '/home/jenkins/.docker/']]) {
