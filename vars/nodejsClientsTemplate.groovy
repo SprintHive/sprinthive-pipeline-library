@@ -10,7 +10,7 @@ def call(Map parameters = [:], body) {
     def clientsImage = parameters.get('clientsImage', 'fabric8/builder-clients:latest')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
-	podTemplate(cloud: cloud, label: label, inheritFrom: "${inheritFrom}",
+	podTemplate(label: label, inheritFrom: "${inheritFrom}",
 			containers: [
 					[name: 'client', image: "${clientsImage}", command: 'cat', ttyEnabled: true, privileged: true],
 					[name: 'nodejs', image: "${nodejsImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true,  workingDir: '/home/jenkins/']],
