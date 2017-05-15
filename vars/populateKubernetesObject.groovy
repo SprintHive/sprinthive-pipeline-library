@@ -2,6 +2,7 @@
 import groovy.io.FileType
 import groovy.json.JsonSlurperClassic
 import groovy.json.JsonOutput
+import com.cloudbees.groovy.cps.NonCPS
 
 def call(body) {
     // evaluate the body block, and collect configuration into the object
@@ -18,11 +19,15 @@ def call(body) {
     def templateVars = [
         "image": "${dockerRegistry}${env.KUBERNETES_NAMESPACE}/${config.name}:${config.version}",
 		"version": config.version,
-		"stage": config.stage
+		"stage": config.stage,
+        "name": config.name
     ]
 
-    def engine = new groovy.text.SimpleTemplateEngine()
-    def populatedTemplate = engine.createTemplate(config.template).make(templateVars)
+    return populateTemplate(config.template, templateVars)
+}
 
-    return populatedTemplate
+@NonCPS
+def populateTemplate(template, templateVars) {
+    def engine = new groovy.text.SimpleTemplateEngine()
+    return engine.createTemplate(template).make(templateVars)
 }
