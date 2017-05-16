@@ -23,7 +23,24 @@ def call(body) {
         "name": config.name
     ]
 
-    return populateTemplate(config.template, templateVars)
+    def templates = [populateTemplate(config.deployTemplate, templateVars), populateTemplate(config.serviceTemplate, templateVars)]
+    return createKubernetesList(templates)
+}
+
+def createKubernetesList(kubernetesObjects) {
+    def items = "[" + kubernetesObjects.join(",") + "]"
+    def listJson = """
+    {
+        "kind": "List",
+        "apiVersion": "v1",
+        "items": ${items}
+    }
+    """
+    println "created json list"
+    println listJson
+    println "done"
+
+    return listJson
 }
 
 @NonCPS
