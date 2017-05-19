@@ -23,8 +23,12 @@ def call(body) {
         "name": config.name
     ]
 
-    def templates = [populateTemplate(config.deployTemplate, templateVars), populateTemplate(config.serviceTemplate, templateVars)]
-    return createKubernetesList(templates)
+    def populatedTemplates = []
+    for (String template : config.templates) {
+        populatedTemplates << populateTemplate(template, templateVars)
+    }
+
+    return createKubernetesList(populatedTemplates)
 }
 
 def createKubernetesList(kubernetesObjects) {
@@ -36,9 +40,8 @@ def createKubernetesList(kubernetesObjects) {
         "items": ${items}
     }
     """
-    println "created json list"
+    println "Generated object list:"
     println listJson
-    println "done"
 
     return listJson
 }
