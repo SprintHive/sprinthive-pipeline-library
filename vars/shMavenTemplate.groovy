@@ -9,7 +9,7 @@ def call(Map parameters = [:], body) {
 
     echo "building using the docker socket"
 
-    podTemplate(cloud: cloud, label: label, inheritFrom: "${inheritFrom}",
+    podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [
                     [name: 'maven', image: "${mavenImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true,
                      envVars: [
