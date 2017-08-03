@@ -1,6 +1,3 @@
-import io.fabric8.Fabric8Commands
-import io.fabric8.Utils
-
 def call(body) {
     // evaluate the body block, and collect configuration into the object
     def config = [version: '']
@@ -23,10 +20,7 @@ def call(body) {
 }
 
 def dockerBuild(version, name){
-    def utils = new Utils()
-    def flow = new Fabric8Commands()
-    def namespace = utils.getNamespace()
-    def newImageName = "${env.DOCKER_REGISTRY_SERVICE_HOST}:${env.DOCKER_REGISTRY_SERVICE_PORT}/${namespace}/${name}:${version}"
+    def newImageName = "${env.DOCKER_REGISTRY_SERVICE_HOST}:${env.DOCKER_REGISTRY_SERVICE_PORT}/${name}:${version}"
 
     sh "docker build -t ${newImageName} ."
     sh "docker push ${newImageName}"

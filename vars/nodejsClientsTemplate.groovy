@@ -1,7 +1,5 @@
 #!/usr/bin/groovy
-import io.fabric8.Fabric8Commands
 def call(Map parameters = [:], body) {
-    def flow = new Fabric8Commands()
 
     def defaultLabel = buildId('nodejs')
     def label = parameters.get('label', defaultLabel)
