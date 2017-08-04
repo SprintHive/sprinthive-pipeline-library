@@ -12,10 +12,8 @@ def call(Map parameters = [:], body) {
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [
-                    [name: 'maven', image: "${mavenImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true,
-                     envVars: [
-                             [key: 'MAVEN_OPTS', value: '-Duser.home=/root/']]],
-                    name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true],
+                [name: 'maven', image: "${mavenImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true, envVars: [ [key: 'MAVEN_OPTS', value: '-Duser.home=/root/'] ]],
+                [name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true]],
             volumes: [secretVolume(secretName: 'jenkins-maven-settings', mountPath: '/root/.m2'),
                       secretVolume(secretName: 'jenkins-docker-cfg', mountPath: '/home/jenkins/.docker'),
                       hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
