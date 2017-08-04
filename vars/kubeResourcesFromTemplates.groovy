@@ -23,22 +23,15 @@ def call(body) {
         populatedTemplates << populateTemplate(template, templateVars)
     }
 
-    return createKubernetesList(populatedTemplates)
+    return concatenateResources(populatedTemplates)
 }
 
-def createKubernetesList(kubernetesObjects) {
-    def items = "[" + kubernetesObjects.join(",") + "]"
-    def listJson = """
-    {
-        "kind": "List",
-        "apiVersion": "v1",
-        "items": ${items}
-    }
-    """
-    println "Generated object list:"
-    println listJson
+def concatenateResources(kubernetesResources) {
+    def resources = kubernetesResources.join("---\n")
+    println "Generated kubernetes resources:"
+    println resources
 
-    return listJson
+    return resources
 }
 
 @NonCPS
