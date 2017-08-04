@@ -11,13 +11,8 @@ def call(body) {
     body.delegate = config
     body()
 
-    def dockerRegistry= ''
-    if (env.DOCKER_REGISTRY_SERVICE_HOST){
-        dockerRegistry = env.DOCKER_REGISTRY_SERVICE_HOST+':'+env.DOCKER_REGISTRY_SERVICE_PORT+'/'
-    }
-
     def templateVars = [
-        "image": "${dockerRegistry}${env.KUBERNETES_NAMESPACE}/${config.name}:${config.version}",
+        "image": config.image,
 		"version": config.version,
 		"stage": config.stage,
         "name": config.name
