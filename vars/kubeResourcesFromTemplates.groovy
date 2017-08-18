@@ -20,7 +20,10 @@ def call(body) {
 
     def populatedTemplates = []
     for (String template : config.templates) {
-        populatedTemplates << populateTemplate(template, templateVars)
+        def populatedTemplate = populateTemplate(template, templateVars)
+        populatedTemplates << populatedTemplate
+        println "Generated resource: "
+        println populatedTemplate
     }
 
     return populatedTemplates
