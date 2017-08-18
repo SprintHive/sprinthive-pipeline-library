@@ -32,5 +32,5 @@ def call(body) {
 @NonCPS
 def populateTemplate(template, templateVars) {
     def engine = new groovy.text.SimpleTemplateEngine()
-    return engine.createTemplate(template).make(templateVars)
+    return engine.createTemplate(template).make(templateVars).toString()
 }
