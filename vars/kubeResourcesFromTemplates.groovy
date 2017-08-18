@@ -23,15 +23,7 @@ def call(body) {
         populatedTemplates << populateTemplate(template, templateVars)
     }
 
-    return concatenateResources(populatedTemplates)
-}
-
-def concatenateResources(kubernetesResources) {
-    def resources = kubernetesResources.join("---\n")
-    println "Generated kubernetes resources:"
-    println resources
-
-    return resources
+    return populatedTemplates
 }
 
 @NonCPS
