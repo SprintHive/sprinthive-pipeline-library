@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('maven')
     def label = parameters.get('label', defaultLabel)
 
-    def gradleImage = parameters.get('gradleImage', 'gradle:4.2-jdk-8-alpine')
+    def gradleImage = parameters.get('gradleImage', 'gradle:4.2-jdk8-alpine')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
