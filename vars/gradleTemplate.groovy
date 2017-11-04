@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 
 def call(Map parameters = [:], body) {
-    def defaultLabel = buildId('maven')
+    def defaultLabel = buildId('gradle')
     def label = parameters.get('label', defaultLabel)
 
     def gradleImage = parameters.get('gradleImage', 'gradle:4.2-jdk8-alpine')
