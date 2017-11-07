@@ -4,7 +4,8 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('gradle')
     def label = parameters.get('label', defaultLabel)
 
-    def gradleImage = parameters.get('gradleImage', 'gradle:4.2-jdk8')
+//    def gradleImage = parameters.get('gradleImage', 'gradle:4.2-jdk8')
+    def gradleImage = parameters.get('gradleImage', 'my-gradle:v1')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
@@ -12,7 +13,7 @@ def call(Map parameters = [:], body) {
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [
-                [name: 'gradle', image: "${gradleImage}", command: '/bin/sh -c', args: 'cat -u root', ttyEnabled: true],
+                [name: 'gradle', image: "${gradleImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true],
                 [name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true]],
             volumes: [configMapVolume(configMapName: 'jenkins-maven-settings', mountPath: '/root/.m2'),
                       hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
