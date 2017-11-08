@@ -8,7 +8,7 @@ def call(Map parameters = [:], body) {
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
-    echo "Deploying gradle:4.2-jdk8 and Docker image"
+    echo "Starting pod with gradle and docker"
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [

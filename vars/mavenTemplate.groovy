@@ -8,7 +8,7 @@ def call(Map parameters = [:], body) {
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
-    echo "building using the docker socket"
+    echo "Starting pod with maven and docker"
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [

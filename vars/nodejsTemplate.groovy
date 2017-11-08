@@ -8,6 +8,8 @@ def call(Map parameters = [:], body) {
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
+    echo "Starting pod with node and docker"
+
 	podTemplate(label: label, inheritFrom: "${inheritFrom}",
 			containers: [
 					[name: 'docker', image: "${dockerImage}", command: 'cat', ttyEnabled: true, privileged: true],
