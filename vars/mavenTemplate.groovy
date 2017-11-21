@@ -12,11 +12,13 @@ def call(Map parameters = [:], body) {
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [
-                [name: 'maven', image: "${mavenImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true, envVars: [ [key: 'MAVEN_OPTS', value: '-Duser.home=/root/'] ]],
-                [name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true]],
+                containerTemplate(name: 'maven', image: "${mavenImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true, envVars: [ envVar(key: 'MAVEN_OPTS', value: '-Duser.home=/root/') ]),
+                containerTemplate(name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true)],
             volumes: [configMapVolume(configMapName: 'jenkins-maven-settings', mountPath: '/root/.m2'),
                       hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
-            envVars: [[key: 'DOCKER_HOST', value: 'unix:/var/run/docker.sock'], [key: 'DOCKER_CONFIG', value: '/home/jenkins/.docker/']]
+            envVars: [
+                envVar(key: 'DOCKER_HOST', value: 'unix:///var/run/docker.sock'),
+                envVar(key: 'DOCKER_CONFIG', value: '/home/jenkins/.docker/')]
     ) {
 
         body(

@@ -12,10 +12,12 @@ def call(Map parameters = [:], body) {
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}",
             containers: [
-                [name: 'gradle', image: "${gradleImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true],
-                [name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true]],
+                containerTemplate(name: 'gradle', image: "${gradleImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true),
+                containerTemplate(name: 'docker', image: "${dockerImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true)],
             volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
-            envVars: [[key: 'DOCKER_HOST', value: 'unix:/var/run/docker.sock'], [key: 'DOCKER_CONFIG', value: '/home/jenkins/.docker/']]
+            envVars: [
+                envVar(key: 'DOCKER_HOST', value: 'unix:///var/run/docker.sock'),
+                envVar(key: 'DOCKER_CONFIG', value: '/home/jenkins/.docker/')]
     ) {
         body()
     }
