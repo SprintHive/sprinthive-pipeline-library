@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('nodejs')
     def label = parameters.get('label', defaultLabel)
 
-    def nodejsImage = parameters.get('nodejsImage', 'node:7.8.0-alpine')
+    def nodejsImage = parameters.get('nodejsImage', 'mhart/alpine-node:8')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
