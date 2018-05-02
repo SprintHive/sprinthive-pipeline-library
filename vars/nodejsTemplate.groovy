@@ -6,6 +6,7 @@ def call(Map parameters = [:], body) {
 
     def nodejsImage = parameters.get('nodejsImage', 'mhart/alpine-node:8')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
+    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.8.2')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with node and docker"
@@ -13,6 +14,7 @@ def call(Map parameters = [:], body) {
 	podTemplate(label: label, inheritFrom: "${inheritFrom}",
 			containers: [
 					containerTemplate(name: 'docker', image: "${dockerImage}", command: 'cat', ttyEnabled: true, privileged: true),
+					containerTemplate(name: 'helm', image: "${helmImage}", command: 'cat', ttyEnabled: true),
 					containerTemplate(name: 'nodejs', image: "${nodejsImage}", command: '/bin/sh -c', args: 'cat', ttyEnabled: true,  workingDir: '/home/jenkins/')],
 			volumes: [hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')],
 			envVars: [
