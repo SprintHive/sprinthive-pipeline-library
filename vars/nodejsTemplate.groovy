@@ -11,7 +11,7 @@ def call(Map parameters = [:], body) {
 
     echo "Starting pod with node and docker"
 
-	podTemplate(label: label, inheritFrom: "${inheritFrom}",
+	podTemplate(label: label, inheritFrom: "${inheritFrom}", serviceAccount: "cicd-jenkins",
 			containers: [
 					containerTemplate(name: 'docker', image: "${dockerImage}", command: 'cat', ttyEnabled: true, privileged: true),
 					containerTemplate(name: 'helm', image: "${helmImage}", command: 'cat', ttyEnabled: true),
