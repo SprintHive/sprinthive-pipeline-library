@@ -9,7 +9,7 @@ def call(body) {
 
     def overrides = ""
     for (String override : config.overrides) {
-        overrides += "--set " + override;
+        overrides += " --set " + override;
     }
 
     container('helm') {
