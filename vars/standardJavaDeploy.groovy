@@ -1,0 +1,62 @@
+#!/usr/bin/groovy
+
+def call(config) {
+    def versionTag = ''
+    def dockerImage
+
+    javaNode {
+        def namespace = ''
+        def deployStage = ''
+
+        stage('Compile source') {
+            def scmInfo = checkout scm
+
+            if (scmInfo == null || scmInfo.GIT_BRANCH == null) {
+                currentBuild.result = 'ABORTED'
+                error('Git branch is null..')
+            }
+
+            def branch = scm.GIT_BRANCH.substring(scm.GIT_BRANCH.lastIndexOf('/')+1)
+            if (branch.equals("dev")) {
+                namespace = "dev"
+                deployStage = 'Development'
+            } else if (branch.equals('master')) {
+                namespace = 'pre-prod'
+                deployStage = 'Pre-Production'
+            } else {
+                namespace = branch
+                deployStage = "Test Stack"
+            }
+
+            versionTag = getNewVersion{}
+            dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
+
+            container(name: 'gradle') {
+                if (config.buildCommandOverride != null) {
+                    sh config.buildCommandOverride
+                } else {
+                    sh "gradle bootJar"
+                }
+            }
+        }
+
+        stage('Publish docker image') {
+            container('docker') {
+                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
+                    sh "docker build -t ${dockerImage} ."
+                    docker.image(dockerImage).push()
+                    docker.image(dockerImage).push('latest')
+                }
+            }
+        }
+
+        stage("Rollout to ${deployStage}") {
+            helmDeploy([
+                releaseName:  config.releaseName,
+                namespace:  namespace,
+                chartName:  config.componentName,
+                imageTag:  versionTag
+            ])
+        }
+    }
+}
