@@ -52,7 +52,7 @@ def call(config) {
             helmDeploy([
                 releaseName:  config.releaseName,
                 namespace:  namespace,
-                chartName:  config.componentName,
+                chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides
             ])
