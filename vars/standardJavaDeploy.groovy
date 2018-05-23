@@ -16,7 +16,7 @@ def call(config) {
                 error('Git branch is null..')
             }
 
-            def branch = scm.GIT_BRANCH.substring(scm.GIT_BRANCH.lastIndexOf('/')+1)
+            def branch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
             echo "Current branch is: ${branch}"
             if (branch.equals("dev")) {
                 namespace = "dev"
