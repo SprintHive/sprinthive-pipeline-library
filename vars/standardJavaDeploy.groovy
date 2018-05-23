@@ -33,12 +33,8 @@ def call(config) {
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
-            container(name: 'gradle') {
-                if (config.buildCommandOverride != null) {
-                    sh config.buildCommandOverride
-                } else {
-                    sh "gradle bootJar"
-                }
+            container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
+                sh config.buildCommandOverride != null ? config.buildCommandOverride : "gradle bootJar"
             }
         }
 
