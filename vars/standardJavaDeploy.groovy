@@ -17,6 +17,7 @@ def call(config) {
             }
 
             def branch = scm.GIT_BRANCH.substring(scm.GIT_BRANCH.lastIndexOf('/')+1)
+            echo "Current branch is: ${branch}"
             if (branch.equals("dev")) {
                 namespace = "dev"
                 deployStage = 'Development'
@@ -27,6 +28,7 @@ def call(config) {
                 namespace = branch
                 deployStage = "Test Stack"
             }
+            echo "Deploy namespace set to ${namespace}"
 
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
