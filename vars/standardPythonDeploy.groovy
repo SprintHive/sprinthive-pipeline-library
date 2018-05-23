@@ -46,7 +46,8 @@ def call(config) {
                 releaseName:  config.releaseName,
                 namespace:  namespace,
                 chartName:  config.componentName,
-                imageTag:  versionTag
+                imageTag:  versionTag,
+                overrides: config.chartOverrides
             ])
         }
     }
