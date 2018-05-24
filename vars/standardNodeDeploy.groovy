@@ -15,6 +15,8 @@ def call(config) {
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
             container(name: 'nodejs') {
+                sh "export ENV_STAGE=${envInfo.deployStage}"
+                sh "export ENV_BRANCH=${envInfo.branch}"
                 if (config.buildCommandOverride != null) {
                     sh config.buildCommandOverride
                 } else {
@@ -26,8 +28,6 @@ def call(config) {
         stage('Publish docker image') {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    sh "export ENV_STAGE=${envInfo.deployStage}"
-                    sh "export ENV_BRANCH=${envInfo.branch}"
                     sh "docker build -t ${dockerImage} ."
                     docker.image(dockerImage).push()
                     docker.image(dockerImage).push('latest')
