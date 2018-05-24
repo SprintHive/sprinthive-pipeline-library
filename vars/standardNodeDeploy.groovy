@@ -8,19 +8,14 @@ def call(config) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
-        echo "Deploying to namespace ${envInfo.deployStage}"
+        echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Build distribution') {
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
-            container(name: 'nodejs') {
-                def buildCommand
-                if (config.buildCommandOverride != null) {
-                    buildCommand = config.buildCommandOverride
-                } else {
-                    buildCommand = "yarn && yarn install --production"
-                }
+            container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'nodejs') {
+                def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
                     export ENV_BRANCH=${envInfo.branch}

@@ -8,7 +8,7 @@ def call(config) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
-        echo "Deploy namespace set to ${envInfo.namespace}"
+        echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Publish docker image') {
             versionTag = getNewVersion{}
@@ -23,10 +23,10 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage}") {
+        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  envInfo.namespace,
+                namespace:  envInfo.deployStage,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides,

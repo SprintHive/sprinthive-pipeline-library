@@ -8,14 +8,19 @@ def call(config) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
-        echo "Deploy namespace set to ${envInfo.namespace}"
+        echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Compile source') {
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
-                sh config.buildCommandOverride != null ? config.buildCommandOverride : "gradle bootJar"
+                def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle bootJar"
+                sh """
+                    export ENV_STAGE=${envInfo.deployStage}
+                    export ENV_BRANCH=${envInfo.branch}
+                    ${buildCommand}
+                """
             }
         }
 
@@ -29,10 +34,10 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage}") {
+        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  envInfo.namespace,
+                namespace:  envInfo.deployStage,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides,
