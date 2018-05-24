@@ -3,32 +3,14 @@
 def call(config) {
     def versionTag = ''
     def dockerImage
-    def namespace = ''
-    def deployStage = ''
 
     dockerNode {
+        def scmInfo = checkout scm
+        def envInfo = environmentInfo(scmInfo)
+        echo "Current branch is: ${envInfo.branch}"
+        echo "Deploy namespace set to ${envInfo.namespace}"
+
         stage('Publish docker image') {
-            def scmInfo = checkout scm
-
-            if (scmInfo == null || scmInfo.GIT_BRANCH == null) {
-                currentBuild.result = 'ABORTED'
-                error('Git branch is null..')
-            }
-
-            def branch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
-            echo "Current branch is: ${branch}"
-            if (branch.equals("dev")) {
-                namespace = "dev"
-                deployStage = 'Development'
-            } else if (branch.equals('master')) {
-                namespace = 'pre-prod'
-                deployStage = 'Pre-Production'
-            } else {
-                namespace = branch
-                deployStage = "Test Stack"
-            }
-            echo "Deploy namespace set to ${namespace}"
-
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
@@ -41,10 +23,10 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${deployStage}") {
+        stage("Rollout to ${envInfo.deployStage}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  namespace,
+                namespace:  envInfo.namespace,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides,
