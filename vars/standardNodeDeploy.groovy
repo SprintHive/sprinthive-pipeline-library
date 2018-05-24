@@ -58,7 +58,8 @@ def call(config) {
                 namespace:  namespace,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
-                overrides: config.chartOverrides
+                overrides: config.chartOverrides,
+                chartRepoOverride: config.chartRepoOverride
             ])
         }
     }
