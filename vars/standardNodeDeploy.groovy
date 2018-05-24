@@ -15,13 +15,17 @@ def call(config) {
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
             container(name: 'nodejs') {
-                sh "export ENV_STAGE=${envInfo.deployStage}"
-                sh "export ENV_BRANCH=${envInfo.branch}"
+                def buildCommand
                 if (config.buildCommandOverride != null) {
-                    sh config.buildCommandOverride
+                    buildCommand = config.buildCommandOverride
                 } else {
-                    sh "yarn && yarn install --production"
+                    buildCommand = "yarn && yarn install --production"
                 }
+                sh """
+                    export ENV_STAGE=${envInfo.deployStage}
+                    export ENV_BRANCH=${envInfo.branch}
+                    ${buildCommand}
+                """
             }
         }
 
