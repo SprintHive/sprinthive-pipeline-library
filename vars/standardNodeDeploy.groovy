@@ -8,7 +8,7 @@ def call(config) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
-        echo "Deploy namespace set to ${envInfo.namespace}"
+        echo "Deploying to namespace ${envInfo.deployStage}"
 
         stage('Build distribution') {
             versionTag = getNewVersion{}
@@ -26,6 +26,8 @@ def call(config) {
         stage('Publish docker image') {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
+                    sh "export ENV_STAGE=${envInfo.deployStage}"
+                    sh "export ENV_BRANCH=${envInfo.branch}"
                     sh "docker build -t ${dockerImage} ."
                     docker.image(dockerImage).push()
                     docker.image(dockerImage).push('latest')
@@ -33,10 +35,10 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage}") {
+        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  envInfo.namespace,
+                namespace:  envInfo.deployStage,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides,
