@@ -5,7 +5,7 @@ def call(Map parameters = [:], body) {
     def label = parameters.get('label', defaultLabel)
 
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
-    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.8.2')
+    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with docker"
