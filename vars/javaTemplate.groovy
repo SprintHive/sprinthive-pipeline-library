@@ -7,7 +7,7 @@ def call(Map parameters = [:], body) {
     def gradleImage = parameters.get('gradleImage', 'bitstack701/base-gradle:v3.0.2')
     def mavenImage = parameters.get('mavenImage', 'maven:3.5-jdk-8-alpine')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
-    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.8.2')
+    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.2')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with gradle and docker"
