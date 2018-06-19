@@ -9,6 +9,9 @@ def call(config) {
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
+        if (envInfo.multivariateTest != null) {
+            echo "Multivariate test: ${envInfo.multivariateTest}"
+        }
 
         stage('Compile source') {
             versionTag = getNewVersion{}
@@ -38,6 +41,7 @@ def call(config) {
             helmDeploy([
                 releaseName:  config.releaseName,
                 namespace:  envInfo.deployStage,
+                multivariateTest: envInfo.multivariateTest,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
                 overrides: config.chartOverrides,
