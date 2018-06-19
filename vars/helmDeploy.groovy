@@ -7,7 +7,7 @@ def call(config) {
     }
 
     if (config.multivariateTest) {
-        overrides += " --set multivariateTest=" + config.multivariateTest
+        overrides += " --set ${config.chartName}.multivariateTest=" + config.multivariateTest
     }
 
     def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${config.namespace}-charts.storage.googleapis.com"
