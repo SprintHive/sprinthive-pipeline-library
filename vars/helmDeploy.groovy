@@ -19,6 +19,6 @@ def call(config) {
     container('helm') {
         sh "helm init --client-only"
         sh "helm repo add service-charts $chartRepo"
-        sh "helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait service-charts/${config.chartName} --set ${config.chartName}.image.tag=${config.imageTag} ${overrides}"
+        sh "helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait --force service-charts/${config.chartName} --set ${config.chartName}.image.tag=${config.imageTag} ${overrides}"
     }
 }
