@@ -22,7 +22,7 @@ def call(config) {
         def statusCode = sh script:"helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait --force service-charts/${config.chartName} --set ${config.chartName}.image.tag=${config.imageTag} ${overrides}", returnStatus:true
 
         if (statusCode != 0) {
-            sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}'```"
+            sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
             error "The deployment failed and was rolled back"
         }
     }
