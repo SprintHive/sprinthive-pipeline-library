@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('kaniko')
     def label = parameters.get('label', defaultLabel)
 
-    def kanikoImage = parameters.get('kanikoImage', 'quay.io/sprinthive/kaniko:6a36891784fb')
+    def kanikoImage = parameters.get('kanikoImage', 'quay.io/sprinthive/kaniko:debug-ubuntu')
     def jnlpImage = parameters.get('jnlpImage', 'jenkins/jnlp-slave:alpine')
     def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
     def inheritFrom = parameters.get('inheritFrom', 'base')
