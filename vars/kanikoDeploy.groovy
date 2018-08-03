@@ -18,9 +18,8 @@ def call(config) {
 
             kanikoBuildPublish([
                 registryCredentialsId: config.registryCredentialsId,
-                registryUrl: config.registryUrl,
-                registryBasePath: config.registryBasePath,
-                imageName: config.componentName,
+                registryHost: config.registryHost,
+                imagePath: config.imagePath,
                 tags: dockerTags
             ])
         }

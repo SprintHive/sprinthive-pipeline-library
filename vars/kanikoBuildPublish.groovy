@@ -6,7 +6,7 @@ def call(config) {
             def dockerFile = config.dockerFileOverride != null ? config.dockerFileOverride : "Dockerfile"
             for (String tag: config.tags) {
                 sh """#!/busybox/sh
-                /kaniko/executor -f `pwd`/${dockerFile} -c `pwd` --destination=${config.registryUrl}/${config.registryBasePath}:${config.imageName}:${tag}
+                /kaniko/executor -f `pwd`/${dockerFile} -c `pwd` --destination=${config.registryHost}/${config.imagePath}:${tag}
                 """
             }
         }
