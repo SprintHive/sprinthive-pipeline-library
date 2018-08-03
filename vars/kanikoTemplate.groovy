@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('kaniko')
     def label = parameters.get('label', defaultLabel)
 
-    def kanikoImage = parameters.get('kanikoImage', 'quay.io/sprinthive/kaniko:db08ecb4336f-debug')
+    def kanikoImage = parameters.get('kanikoImage', 'quay.io/sprinthive/kaniko:6a36891784fb')
     def jnlpImage = parameters.get('jnlpImage', 'jenkins/jnlp-slave:alpine')
     def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
     def inheritFrom = parameters.get('inheritFrom', 'base')
@@ -15,7 +15,7 @@ def call(Map parameters = [:], body) {
 			containers: [
                     containerTemplate(name: 'jnlp', image: "${jnlpImage}", args: '${computer.jnlpmac} ${computer.name}'),
 					containerTemplate(name: 'helm', image: "${helmImage}", command: 'cat', ttyEnabled: true),
-					containerTemplate(name: 'kaniko', image: "${kanikoImage}", command: '/busybox/cat', ttyEnabled: true)]) {
+					containerTemplate(name: 'kaniko', image: "${kanikoImage}", command: 'cat', ttyEnabled: true)]) {
 		body()
 	}
 }
