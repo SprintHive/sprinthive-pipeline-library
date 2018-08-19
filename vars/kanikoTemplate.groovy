@@ -15,7 +15,7 @@ def call(Map parameters = [:], body) {
 			containers: [
                     containerTemplate(name: 'jnlp', image: "${jnlpImage}", args: '${computer.jnlpmac} ${computer.name}'),
 					containerTemplate(name: 'helm', image: "${helmImage}", command: 'cat', ttyEnabled: true),
-					containerTemplate(name: 'kaniko', image: "${kanikoImage}", shell: '/busybox/sh', command: '/busybox/cat', ttyEnabled: true)]) {
+					containerTemplate(name: 'kaniko', image: "${kanikoImage}", command: '/busybox/cat', ttyEnabled: true)]) {
 		body()
 	}
 }

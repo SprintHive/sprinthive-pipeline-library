@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 
 def call(config) {
-    container(name: 'kaniko') {
+    container(name: 'kaniko', shell: '/busybox/sh') {
         withEnv(['PATH+EXTRA=/busybox']) {
             withCredentials([file(credentialsId: config.registryCredentialsId, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                 def dockerFile = config.dockerFileOverride != null ? config.dockerFileOverride : "Dockerfile"
