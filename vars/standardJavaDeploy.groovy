@@ -51,7 +51,7 @@ def call(config) {
 
         if ("${env.POST_BUILD_TRIGGER_JOB}") {
             stage("Trigger ${env.POST_BUILD_TRIGGER_JOB}") {
-                build job: env.POST_BUILD_TRIGGER_JOB, wait: false
+                build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'IMAGE_TAG', value: versionTag)], wait: false
             }
         }
     }
