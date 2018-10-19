@@ -7,6 +7,7 @@ def call(scmInfo) {
     }
 
     def deployStage = null
+    echo "Local branch is: ${scmInfo.GIT_LOCAL_BRANCH}"
     def rawBranch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
     def branchParts = rawBranch.split('-')
     def inferredBranch = null
