@@ -8,6 +8,7 @@ def call(scmInfo) {
 
     def deployStage = null
     def inferredBranch = null
+    def multivariateTest = null
     if (scmInfo.GIT_LOCAL_BRANCH) {
         inferredBranch = scmInfo.GIT_LOCAL_BRANCH
         echo "Using local branch: ${inferredBranch}"
@@ -17,7 +18,6 @@ def call(scmInfo) {
 
         def rawBranch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
         def branchParts = rawBranch.split('-')
-        def multivariateTest = null
         // A multivariate test has a branch with naming convention <originbranch-mvt-mvtname>. E.g. dev-mvt-lowagereq
         if (branchParts.length > 2 && branchParts[1] == "mvt") {
             inferredBranch = branchParts[0]
