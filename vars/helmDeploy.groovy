@@ -3,14 +3,19 @@
 def call(config) {
     def overrides = ""
     for (String override : config.overrides) {
-        overrides += " --set " + override;
+        overrides += " --set " + override
     }
 
     if (config.multivariateTest) {
         overrides += " --set ${config.chartName}.multivariateTest=" + config.multivariateTest
     }
 
-    def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${config.namespace}-charts.storage.googleapis.com"
+    def chartEnv = env.CHART_ENVIRONMENT
+    if (!chartEnv) {
+        chartEnv = config.namespace
+    }
+
+    def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${chartEnv}-charts.storage.googleapis.com"
     def releaseName = config.releaseName
     if (config.multivariateTest != null) {
         releaseName += "-" + config.multivariateTest

@@ -6,7 +6,7 @@ def call(scmInfo) {
         error('Git branch is null..')
     }
 
-    def deployStage = env.SERVICE_CHART
+    def deployStage = null
     def rawBranch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
     def branchParts = rawBranch.split('-')
     def inferredBranch = null
@@ -19,18 +19,15 @@ def call(scmInfo) {
         inferredBranch = rawBranch
     }
 
-    if (!deployStage) {
-        if (inferredBranch.equals("dev")) {
-            deployStage = "dev"
-        } else if (inferredBranch.equals('master')) {
-            deployStage = 'pre-prod'
-        } else {
-            deployStage = inferredBranch
-        }
-        echo "SERVICE_CHART env variable not set, deployStage set based on branch: ${deployStage}"
+    if (inferredBranch.equals("dev")) {
+        deployStage = "dev"
+    } else if (inferredBranch.equals('master')) {
+        deployStage = 'pre-prod'
     } else {
-        echo "deployStage set to SERVICE_CHART env variable: ${deployStage}"
+        deployStage = inferredBranch
     }
+
+
 
     return [
         "branch": inferredBranch,
