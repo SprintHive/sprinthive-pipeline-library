@@ -19,7 +19,10 @@ def call(scmInfo) {
         inferredBranch = rawBranch
     }
 
-    if (inferredBranch.equals("dev")) {
+    if (env.NAMESPACE_OVERRIDE != null) {
+        deployStage = env.NAMESPACE_OVERRIDE
+    }
+    else if (inferredBranch.equals("dev")) {
         deployStage = "dev"
     } else if (inferredBranch.equals('master')) {
         deployStage = 'pre-prod'
