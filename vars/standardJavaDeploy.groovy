@@ -3,10 +3,12 @@
 def call(config) {
     def versionTag = ''
     def dockerImage
+    def targetNamespace
 
     javaNode {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
+        targetNamespace = envInfo.deployStage
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
         if (envInfo.multivariateTest != null) {
@@ -48,11 +50,25 @@ def call(config) {
                 chartRepoOverride: config.chartRepoOverride
             ])
         }
+    }
 
-        if (env.POST_BUILD_TRIGGER_JOB != null) {
-            stage("Trigger ${env.POST_BUILD_TRIGGER_JOB}") {
-                build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'IMAGE_TAG', value: versionTag)], wait: false
-            }
+    if (config.integrationTestPod != null) {
+        def label = "java-test-${UUID.randomUUID().toString()}"
+        stage("Integration test") {
+              config.integrationTestPod(label, targetNamespace) {
+                node(label) {
+                    checkout scm
+                    container('gradle') {
+                        sh 'gradle -i integrationTest'
+                    }
+                }
+              }
+        }
+    }
+
+    if (env.POST_BUILD_TRIGGER_JOB != null) {
+        stage("Trigger ${env.POST_BUILD_TRIGGER_JOB}") {
+            build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'IMAGE_TAG', value: versionTag)], wait: false
         }
     }
 }
