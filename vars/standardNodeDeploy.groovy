@@ -48,7 +48,7 @@ def call(config) {
         }
     }
 
-    if (config.runIntegrationTest != null && config.runIntegrationTest) {
+    if (config.runIntegrationTests != null && config.runIntegrationTests) {
         stage("Integration test") {
             def label = "node-test-${UUID.randomUUID().toString()}"
             podTemplate(label: label, containers: [
