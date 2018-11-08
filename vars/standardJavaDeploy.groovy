@@ -3,10 +3,12 @@
 def call(config) {
     def versionTag = ''
     def dockerImage
+    def targetNamespace
 
     javaNode {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
+        targetNamespace = envInfo.deployStage
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
         if (envInfo.multivariateTest != null) {
