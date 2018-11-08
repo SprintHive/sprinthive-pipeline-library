@@ -52,7 +52,6 @@ def call(config) {
         }
     }
 
-    def gradleImage = parameters.get('gradleImage', 'bitstack701/base-gradle:v3.0.2')
     if (config.runIntegrationTest != null && config.runIntegrationTest) {
         stage("Integration test") {
             def label = "java-test-${UUID.randomUUID().toString()}"
