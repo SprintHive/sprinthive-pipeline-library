@@ -52,15 +52,10 @@ def call(config) {
         }
     }
 
-    if (config.runIntegrationTests != null && config.runIntegrationTests) {
+    if (config.integrationTestPod != null) {
+        def label = "java-test-${UUID.randomUUID().toString()}"
         stage("Integration test") {
-            def label = "java-test-${UUID.randomUUID().toString()}"
-            podTemplate(label: label, containers: [
-                containerTemplate(name: 'gradle', image: 'bitstack701/base-gradle:v3.0.2', ttyEnabled: true, command: 'cat'),
-              ], namespace: targetNamespace, envVars: [
-                envVar(key: 'JENKINS_URL', value: 'http://cicd-jenkins.infra:8080/'),
-                envVar(key: 'JENKINS_TUNNEL', value: 'cicd-jenkins-agent.infra:50000')
-              ]) {
+              config.integrationTestPod(label, targetNamespace) {
                 node(label) {
                     checkout scm
                     container('gradle') {
