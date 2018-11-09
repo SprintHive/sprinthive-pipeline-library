@@ -63,7 +63,7 @@ def call(config) {
               ]) {
                 node(label) {
                     checkout scm
-                    container('node') {
+                    container('gradle') {
                         sh 'gradle -i integrationTest'
                     }
                 }
