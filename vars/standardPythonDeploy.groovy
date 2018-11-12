@@ -11,6 +11,8 @@ def call(config) {
         echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Build docker image') {
+            versionTag = getNewVersion{}
+            dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
             container('docker') {
                 sh "docker build -t ${dockerImage} ."
             }
