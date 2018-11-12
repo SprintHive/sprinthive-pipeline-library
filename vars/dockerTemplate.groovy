@@ -56,6 +56,11 @@ def call(Map parameters = [:], body) {
         command:
         - cat
         tty: true
+      volumes:
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
     """
     ) {
     body()
