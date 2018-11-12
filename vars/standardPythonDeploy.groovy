@@ -10,13 +10,21 @@ def call(config) {
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
 
-        stage('Publish docker image') {
-            versionTag = getNewVersion{}
-            dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
+        stage('Build docker image') {
+            container('docker') {
+                sh "docker build -t ${dockerImage} ."
+            }
+        }
 
+        stage('Container scan') {
+            container('clairscanner') {
+                sh '/clair -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
+            }
+        }
+
+        stage('Push docker image') {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    sh "docker build -t ${dockerImage} ."
                     docker.image(dockerImage).push()
                     docker.image(dockerImage).push('latest')
                 }
