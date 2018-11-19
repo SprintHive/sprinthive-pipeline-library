@@ -52,6 +52,11 @@ def call(Map parameters = [:], body) {
         - containerPort: 9279
           name: http
           protocol: TCP
+        resources:
+          limits:
+            ephemeral-storage: 3Gi
+          requests:
+            ephemeral-storage: 3Gi
       - name: helm
         image: ${helmImage}
         command:
