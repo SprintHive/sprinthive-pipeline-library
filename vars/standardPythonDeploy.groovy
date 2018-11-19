@@ -14,7 +14,9 @@ def call(config) {
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
             container('docker') {
-                sh "docker build -t ${dockerImage} ."
+                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
+                    sh "docker build -t ${dockerImage} ."
+                }
             }
         }
 
