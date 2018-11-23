@@ -35,7 +35,7 @@ def call(config) {
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
                 container('clairscanner') {
-                    sh '/clair -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
+                    sh '/clair -w /config/whitelist.yaml -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
                 }
             }
         }
