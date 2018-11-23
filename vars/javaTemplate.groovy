@@ -17,6 +17,23 @@ def call(Map parameters = [:], body) {
     kind: Pod
     spec:
       serviceAccount: helm
+      initContainers:
+      - name: clair-whitelist-init
+        image: alpine/git
+        args:
+        - clone
+        - --single-branch
+        - --depth=1
+        - --
+        - https://bitbucket.org/sprinthive/clair-whitelist.git
+        - /config
+        securityContext:
+          runAsUser: 1
+          allowPriviledgeEscalation: false
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: clair-whitelist
+          mountPath: /config
       containers:
       - name: docker
         image: ${dockerImage}
@@ -48,6 +65,8 @@ def call(Map parameters = [:], body) {
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run/docker.sock
+        - name: clair-whitelist
+          mountPath: /config
         ports:
         - containerPort: 9279
           name: http
@@ -81,6 +100,8 @@ def call(Map parameters = [:], body) {
       - name: maven-settings
         configMap:
           name: jenkins-maven-settings
+      - name: clair-whitelist
+        emptyDir: {}
     """
     ) {
     body()
