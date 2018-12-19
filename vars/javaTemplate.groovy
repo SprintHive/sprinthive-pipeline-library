@@ -40,6 +40,8 @@ def call(Map parameters = [:], body) {
       containers:
       - name: docker
         image: ${dockerImage}
+        securityContext:
+          runAsUser: 0
         command:
         - cat
         tty: true
