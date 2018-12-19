@@ -28,7 +28,7 @@ def call(Map parameters = [:], body) {
         - https://bitbucket.org/sprinthive/clair-whitelist.git
         - /config
         securityContext:
-          runAsUser: 1000
+          runAsUser: 1
           allowPriviledgeEscalation: false
           readOnlyRootFilesystem: true
         volumeMounts:
@@ -83,6 +83,10 @@ def call(Map parameters = [:], body) {
         tty: true
       - name: gradle
         image: ${gradleImage}
+        securityContext:
+          runAsUser: 1000
+          allowPriviledgeEscalation: false
+          readOnlyRootFilesystem: true
         command:
         - cat
         tty: true
