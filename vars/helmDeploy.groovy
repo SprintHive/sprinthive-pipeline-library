@@ -22,7 +22,7 @@ def call(config) {
     }
 
     container('helm') {
-        sh "helm init --client-only --home /tmp"
+        sh "helm init --client-only"
         sh "helm repo add service-charts $chartRepo"
         def statusCode = sh script:"helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait service-charts/${config.chartName} --set ${config.chartName}.image.tag=${config.imageTag} ${overrides}", returnStatus:true
 
