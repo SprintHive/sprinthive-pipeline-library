@@ -16,6 +16,9 @@ def call(Map parameters = [:], body) {
     apiVersion: v1
     kind: Pod
     spec:
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 2000
       serviceAccount: helm
       initContainers:
       - name: clair-whitelist-init
@@ -83,10 +86,6 @@ def call(Map parameters = [:], body) {
         tty: true
       - name: gradle
         image: ${gradleImage}
-        securityContext:
-          runAsUser: 1000
-          allowPriviledgeEscalation: false
-          readOnlyRootFilesystem: true
         command:
         - cat
         tty: true
