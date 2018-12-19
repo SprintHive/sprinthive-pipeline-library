@@ -59,6 +59,8 @@ def call(Map parameters = [:], body) {
         - cat
         tty: true
         securityContext:
+          runAsUser: 0
+          runAsGroup: 0
           privileged: true
         env:
         - name: DOCKER_HOST
