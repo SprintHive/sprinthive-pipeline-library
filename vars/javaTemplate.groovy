@@ -28,7 +28,7 @@ def call(Map parameters = [:], body) {
         - https://bitbucket.org/sprinthive/clair-whitelist.git
         - /config
         securityContext:
-          runAsUser: 1
+          runAsUser: 1000
           allowPriviledgeEscalation: false
           readOnlyRootFilesystem: true
         volumeMounts:
