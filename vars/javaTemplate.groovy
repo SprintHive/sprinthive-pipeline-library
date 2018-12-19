@@ -86,7 +86,7 @@ def call(Map parameters = [:], body) {
       - name: helm
         image: ${helmImage}
         env:
-          name: HELM_HOME
+        - name: HELM_HOME
           value: /tmp
         command:
         - cat
