@@ -85,6 +85,9 @@ def call(Map parameters = [:], body) {
             ephemeral-storage: 3Gi
       - name: helm
         image: ${helmImage}
+        env:
+          name: HELM_HOME
+          value: /tmp
         command:
         - cat
         tty: true
