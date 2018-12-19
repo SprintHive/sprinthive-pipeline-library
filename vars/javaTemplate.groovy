@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('gradle')
     def label = parameters.get('label', defaultLabel)
 
-    def gradleImage = parameters.get('gradleImage', 'bitstack701/base-gradle:v3.0.2')
+    def gradleImage = parameters.get('gradleImage', 'gradle:jre11-slim')
     def clairScannerImage = parameters.get('clairScannerImage', 'objectiflibre/clair-scanner:latest')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
