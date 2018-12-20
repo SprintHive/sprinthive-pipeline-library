@@ -16,6 +16,9 @@ def call(Map parameters = [:], body) {
     apiVersion: v1
     kind: Pod
     spec:
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 2000
       serviceAccount: helm
       initContainers:
       - name: clair-whitelist-init
@@ -41,6 +44,8 @@ def call(Map parameters = [:], body) {
         - cat
         tty: true
         securityContext:
+          runAsUser: 0
+          runAsGroup: 0
           privileged: true
         env:
         - name: DOCKER_HOST
@@ -54,6 +59,8 @@ def call(Map parameters = [:], body) {
         - cat
         tty: true
         securityContext:
+          runAsUser: 0
+          runAsGroup: 0
           privileged: true
         env:
         - name: DOCKER_HOST
@@ -78,6 +85,9 @@ def call(Map parameters = [:], body) {
             ephemeral-storage: 3Gi
       - name: helm
         image: ${helmImage}
+        env:
+        - name: HELM_HOME
+          value: /tmp
         command:
         - cat
         tty: true
