@@ -29,6 +29,17 @@ def call(config) {
             }
         }
 
+        stage('Unit test') {
+            container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
+                def testCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle test"
+                sh """
+                    export ENV_STAGE=${envInfo.deployStage}
+                    export ENV_BRANCH=${envInfo.branch}
+                    ${testCommand}
+                """
+            }
+        }
+
         stage('Build docker image') {
             container('docker') {
                 sh "docker build -t ${dockerImage} ."
