@@ -10,6 +10,7 @@ def call(Map parameters = [:], body) {
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with kaniko and helm"
+    echo "Starting pod with kaniko and helm"
 
 	podTemplate(label: label, inheritFrom: "${inheritFrom}", serviceAccount: "helm",
 			containers: [
