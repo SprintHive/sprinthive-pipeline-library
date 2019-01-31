@@ -10,7 +10,7 @@ def call() {
             if (changeLogText != "") {
                 changeLogText += "\n"
             }
-            changeLogText += "${entry.commitId.substring(0, 8)} - ${entry.msg}"
+            changeLogText += "`${entry.commitId.substring(0, 8)}` - ${entry.msg}"
         }
     }
 
