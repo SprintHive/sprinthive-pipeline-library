@@ -6,7 +6,7 @@ def call(Map parameters = [:], body) {
 
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def clairScannerImage = parameters.get('clairScannerImage', 'objectiflibre/clair-scanner:latest')
-    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
+    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.13.0')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting docker jenkins worker"
