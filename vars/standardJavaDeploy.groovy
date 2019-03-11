@@ -86,7 +86,7 @@ def call(config) {
                         if (env.SPRING_PROFILES == null) {
                             sh "gradle -i integrationTest"
                         } else {
-                            sh "gradle -i integrationTest -Pprofiles=${env.SPRING_PROFILES}"
+                            sh "gradle -i integrationTest -Pprofiles=${env.INTEGRATION_TEST_SPRING_PROFILES}"
                         }
                     }
                 }
