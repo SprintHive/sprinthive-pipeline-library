@@ -83,10 +83,14 @@ def call(config) {
                 node(label) {
                     checkout scm
                     container('gradle') {
-                        sh 'gradle -i integrationTest'
+                        if (env.SPRING_PROFILES == null) {
+                            sh "gradle -i integrationTest"
+                        } else {
+                            sh "gradle -i integrationTest -Pprofiles=${env.SPRING_PROFILES}"
+                        }
                     }
                 }
-              }
+            }
         }
     }
 
