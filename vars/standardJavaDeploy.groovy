@@ -42,7 +42,7 @@ def call(config) {
 
         stage('Build docker image') {
             container('docker') {
-                sh "docker build -t ${dockerImage} ."
+                sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
             }
         }
 
@@ -58,7 +58,7 @@ def call(config) {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
                     docker.image(dockerImage).push()
-                    docker.image(dockerImage).push('latest')
+                    docker.image(dockerImage).push(envInfo.branch)
                 }
             }
         }
