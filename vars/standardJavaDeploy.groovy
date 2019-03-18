@@ -40,6 +40,10 @@ def call(config) {
             }
         }
 
+        stage('JaCoCo') {
+            jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+        }
+
         stage('Build docker image') {
             container('docker') {
                 sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
