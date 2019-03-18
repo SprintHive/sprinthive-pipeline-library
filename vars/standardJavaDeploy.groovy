@@ -31,7 +31,15 @@ def call(config) {
 
         stage('Unit test') {
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
-                def testCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle test jacocoTestReport"
+                def testCommand
+                if (config.buildCommandOverride != null) {
+                    testCommand = config.buildCommandOverride
+                } else {
+                    testCommand = "gradle test"
+                    if (config.jacocoEnabled != false) {
+                        testCommand += " jacocoTestReport"
+                    }
+                }
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
                     export ENV_BRANCH=${envInfo.branch}
@@ -40,8 +48,10 @@ def call(config) {
             }
         }
 
-        stage('JaCoCo') {
-            jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+        if (config.jacocoEnabled != false) {
+            stage('JaCoCo') {
+                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+            }
         }
 
         stage('Build docker image') {
