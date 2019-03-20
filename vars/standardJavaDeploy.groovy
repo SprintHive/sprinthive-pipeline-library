@@ -99,8 +99,6 @@ def call(config) {
 
     if (env.POST_BUILD_TRIGGER_REMOTE_JENKINS != null && env.REMOTE_JENKINS_CREDENTIALS != null) {
         stage("Trigger ${env.POST_BUILD_TRIGGER_REMOTE_JENKINS}") {
-            withCredentials([usernamePassword(credentialsId: "${env.REMOTE_JENKINS_CREDENTIALS}", passwordVariable: "API_TOKEN", usernameVariable: "USERNAME")]) {
-            triggerRemoteJob auth: TokenAuth(apiToken: "${env.API_TOKEN}", userName: "${env.USERNAME}"), job: "${JOB_NAME}";, maxConn: 1, parameters: "IMAGE_TAG=${env.IMAGE_TAG}", remoteJenkinsName: "${POST_BUILD_TRIGGER_REMOTE_JENKINS}, useCrumbCache: true, useJobInfoCache: true
-        }
+            triggerRemoteJob job: "${JOB_NAME}", maxConn: 1, parameters: "IMAGE_TAG=${env.IMAGE_TAG}", remoteJenkinsName: "${POST_BUILD_TRIGGER_REMOTE_JENKINS}", useCrumbCache: true, useJobInfoCache: true
     }
 }
