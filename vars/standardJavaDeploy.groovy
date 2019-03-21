@@ -97,8 +97,9 @@ def call(config) {
         }
     }
 
-    if (env.POST_BUILD_TRIGGER_REMOTE_JENKINS != null && env.REMOTE_JENKINS_CREDENTIALS != null) {
+    if (env.POST_BUILD_TRIGGER_REMOTE_JENKINS != null) {
         stage("Trigger ${env.POST_BUILD_TRIGGER_REMOTE_JENKINS}") {
-            triggerRemoteJob job: "${JOB_NAME}", maxConn: 1, parameters: "IMAGE_TAG=${env.IMAGE_TAG}", remoteJenkinsName: "${POST_BUILD_TRIGGER_REMOTE_JENKINS}", useCrumbCache: true, useJobInfoCache: true
+            triggerRemoteJob job: "${JOB_NAME}", maxConn: 1, parameters: "IMAGE_TAG=${versionTag}", remoteJenkinsName: "${POST_BUILD_TRIGGER_REMOTE_JENKINS}", useCrumbCache: true, useJobInfoCache: true
+        }
     }
 }
