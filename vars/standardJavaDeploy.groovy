@@ -66,7 +66,7 @@ def call(config) {
         stage("Rollout to ${envInfo.deployStage.capitalize()}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  envInfo.deployStage,
+                namespace:  targetNamespace,
                 multivariateTest: envInfo.multivariateTest,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
@@ -97,9 +97,14 @@ def call(config) {
         }
     }
 
-    if (env.POST_BUILD_TRIGGER_REMOTE_JENKINS != null) {
-        stage("Trigger ${env.POST_BUILD_TRIGGER_REMOTE_JENKINS}") {
-            triggerRemoteJob job: "${JOB_NAME}", maxConn: 1, parameters: "IMAGE_TAG=${versionTag}", remoteJenkinsName: "${POST_BUILD_TRIGGER_REMOTE_JENKINS}", useCrumbCache: true, useJobInfoCache: true
-        }
+    if (config.postDeploySteps != null) {
+        config.postDeploySteps ([
+            releaseName:  config.releaseName,
+            namespace:  targetNamespace,
+            chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
+            imageTag:  versionTag,
+            overrides: config.chartOverrides,
+            chartRepoOverride: config.chartRepoOverride
+        ])
     }
 }
