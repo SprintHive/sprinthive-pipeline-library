@@ -46,19 +46,13 @@ def call(config) {
                     ${testCommand}
                 """
             }
-
-            if (config.jacocoEnabled) {
-                step {
-                    jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
-                }
-            }
         }
 
-//        if (config.jacocoEnabled) {
-//            stage('JaCoCo') {
-//                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
-//            }
-//        }
+        if (config.jacocoEnabled) {
+            stage('JaCoCo') {
+                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+            }
+        }
 
         stage('Build docker image') {
             container('docker') {
