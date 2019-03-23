@@ -36,7 +36,7 @@ def call(config) {
                     testCommand = config.buildCommandOverride
                 } else {
                     testCommand = "gradle test"
-                    if (config.jacocoEnabled != false) {
+                    if (config.jacocoEnabled) {
                         testCommand += " jacocoTestReport"
                     }
                 }
@@ -46,13 +46,19 @@ def call(config) {
                     ${testCommand}
                 """
             }
-        }
 
-        if (config.jacocoEnabled != false) {
-            stage('JaCoCo') {
-                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+            if (config.jacocoEnabled) {
+                step {
+                    jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+                }
             }
         }
+
+//        if (config.jacocoEnabled) {
+//            stage('JaCoCo') {
+//                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
+//            }
+//        }
 
         stage('Build docker image') {
             container('docker') {
@@ -80,7 +86,7 @@ def call(config) {
         stage("Rollout to ${envInfo.deployStage.capitalize()}") {
             helmDeploy([
                 releaseName:  config.releaseName,
-                namespace:  envInfo.deployStage,
+                namespace:  targetNamespace,
                 multivariateTest: envInfo.multivariateTest,
                 chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
                 imageTag:  versionTag,
@@ -113,5 +119,16 @@ def call(config) {
 
             build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'IMAGE_TAG', value: versionTag), string(name: 'CHANGE_LOG', value: changeLog())], wait: false
         }
+    }
+
+    if (config.postDeploySteps != null) {
+        config.postDeploySteps ([
+            releaseName:  config.releaseName,
+            namespace:  targetNamespace,
+            chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
+            imageTag:  versionTag,
+            overrides: config.chartOverrides,
+            chartRepoOverride: config.chartRepoOverride
+        ])
     }
 }
