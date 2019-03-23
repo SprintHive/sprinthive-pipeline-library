@@ -31,12 +31,26 @@ def call(config) {
 
         stage('Unit test') {
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
-                def testCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle test"
+                def testCommand
+                if (config.buildCommandOverride != null) {
+                    testCommand = config.buildCommandOverride
+                } else {
+                    testCommand = "gradle test"
+                    if (config.jacocoEnabled) {
+                        testCommand += " jacocoTestReport"
+                    }
+                }
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
                     export ENV_BRANCH=${envInfo.branch}
                     ${testCommand}
                 """
+            }
+        }
+
+        if (config.jacocoEnabled) {
+            stage('JaCoCo') {
+                jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
             }
         }
 
