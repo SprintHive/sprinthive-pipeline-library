@@ -32,7 +32,7 @@ def call(config) {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
                     docker.image(dockerImage).push()
-                    docker.image(dockerImage).push('latest')
+                    docker.image(dockerImage).push(envInfo.branch)
                 }
             }
         }
