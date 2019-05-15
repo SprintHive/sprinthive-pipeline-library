@@ -24,7 +24,7 @@ def call(config) {
     container('helm') {
         sh "helm init --client-only"
         sh "helm repo add service-charts $chartRepo"
-        def statusCode = sh script:"helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait service-charts/${config.chartName} --set ${config.chartName}.image.tag=${config.imageTag} ${overrides}", returnStatus:true
+        def statusCode = sh script:"helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait service-charts/${config.chartName} --set global.image.tag=${config.imageTag} ${overrides}", returnStatus:true
 
         if (statusCode != 0) {
             sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
