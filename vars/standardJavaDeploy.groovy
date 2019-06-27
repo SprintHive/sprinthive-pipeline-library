@@ -56,7 +56,9 @@ def call(config) {
 
         stage('Build docker image') {
             container('docker') {
-                sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
+                    sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                }
             }
         }
 
