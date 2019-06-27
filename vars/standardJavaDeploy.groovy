@@ -56,7 +56,9 @@ def call(config) {
 
         stage('Build docker image') {
             container('docker') {
-                sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
+                    sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                }
             }
         }
 
@@ -77,16 +79,18 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
-            helmDeploy([
-                releaseName:  config.releaseName,
-                namespace:  targetNamespace,
-                multivariateTest: envInfo.multivariateTest,
-                chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
-                imageTag:  versionTag,
-                overrides: config.chartOverrides,
-                chartRepoOverride: config.chartRepoOverride
-            ])
+        if (env.DEPLOY_AFTER_BUILD != "false") {
+            stage("Rollout to ${envInfo.deployStage.capitalize()}") {
+                helmDeploy([
+                    releaseName:  config.releaseName,
+                    namespace:  targetNamespace,
+                    multivariateTest: envInfo.multivariateTest,
+                    chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
+                    imageTag:  versionTag,
+                    overrides: config.chartOverrides,
+                    chartRepoOverride: config.chartRepoOverride
+                ])
+            }
         }
     }
 

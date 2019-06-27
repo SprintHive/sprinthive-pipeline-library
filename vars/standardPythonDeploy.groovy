@@ -37,15 +37,17 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
-            helmDeploy([
-                releaseName:  config.releaseName,
-                namespace:  envInfo.deployStage,
-                chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
-                imageTag:  versionTag,
-                overrides: config.chartOverrides,
-                chartRepoOverride: config.chartRepoOverride
-            ])
+        if (env.DEPLOY_AFTER_BUILD != "false") {
+            stage("Rollout to ${envInfo.deployStage.capitalize()}") {
+                helmDeploy([
+                    releaseName:  config.releaseName,
+                    namespace:  envInfo.deployStage,
+                    chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
+                    imageTag:  versionTag,
+                    overrides: config.chartOverrides,
+                    chartRepoOverride: config.chartRepoOverride
+                ])
+            }
         }
 
         if (env.POST_BUILD_TRIGGER_JOB != null) {
