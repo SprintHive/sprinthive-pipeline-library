@@ -77,16 +77,18 @@ def call(config) {
             }
         }
 
-        stage("Rollout to ${envInfo.deployStage.capitalize()}") {
-            helmDeploy([
-                releaseName:  config.releaseName,
-                namespace:  targetNamespace,
-                multivariateTest: envInfo.multivariateTest,
-                chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
-                imageTag:  versionTag,
-                overrides: config.chartOverrides,
-                chartRepoOverride: config.chartRepoOverride
-            ])
+        if (env.DEPLOY_AFTER_BUILD != "false") {
+            stage("Rollout to ${envInfo.deployStage.capitalize()}") {
+                helmDeploy([
+                    releaseName:  config.releaseName,
+                    namespace:  targetNamespace,
+                    multivariateTest: envInfo.multivariateTest,
+                    chartName:  config.chartNameOverride != null ? config.chartNameOverride : config.componentName,
+                    imageTag:  versionTag,
+                    overrides: config.chartOverrides,
+                    chartRepoOverride: config.chartRepoOverride
+                ])
+            }
         }
     }
 
