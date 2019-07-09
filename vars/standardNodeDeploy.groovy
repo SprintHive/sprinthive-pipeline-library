@@ -27,8 +27,8 @@ def call(config) {
         }
 
         stage('Build docker image') {
-            docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                container('docker') {
+            container('docker') {
+                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
                     sh "docker build -t ${dockerImage} ."
                 }
             }
