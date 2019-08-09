@@ -3,8 +3,8 @@
 def call(config) {
   pipeline {
     environment {
-      sourceDockerImage  = "eu.gcr.io/${params.sourceGcrProjectId}/${config.application}:${params.imageTag}"
-      targetDockerImage  = "eu.gcr.io/${params.targetGcrProjectId}/${config.application}:${params.imageTag}"
+      sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
+      targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
     }
     agent none
     stages {
@@ -51,7 +51,7 @@ def call(config) {
         }
         steps {
           script {
-            docker.withRegistry("https://eu.gcr.io", "gcr:${params.gcrCredentialsId}") {
+            docker.withRegistry("https://eu.gcr.io", "gcr:${config.gcrCredentialsId}") {
 
               docker.image(sourceDockerImage).pull()
               sh "docker tag ${sourceDockerImage} ${targetDockerImage}"
