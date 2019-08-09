@@ -13,7 +13,7 @@ def call(config) {
         steps {
           script {
               timeout(time:5, unit:'DAYS') {
-                input message:'Create and deploy new release image?'
+                input message:"Push and deploy new release image with tag \"${params.imageTag}\"?"
               }
           }
         }
