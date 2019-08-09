@@ -3,8 +3,8 @@
 def call(config) {
   pipeline {
     environment {
-      sourceDockerImage  = "eu.gcr.io/${params.sourceGcrProjectId}/id-document:${params.imageTag}"
-      targetDockerImage  = "eu.gcr.io/${params.targetGcrProjectId}/id-document:${params.imageTag}"
+      sourceDockerImage  = "eu.gcr.io/${params.sourceGcrProjectId}/${config.application}:${params.imageTag}"
+      targetDockerImage  = "eu.gcr.io/${params.targetGcrProjectId}/${config.application}:${params.imageTag}"
     }
     agent none
     stages {
