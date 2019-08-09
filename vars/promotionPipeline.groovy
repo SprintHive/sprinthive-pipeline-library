@@ -3,8 +3,8 @@
 def call(config) {
   pipeline {
     environment {
-      sourceDockerImage  = "eu.gcr.io/${params.sourceGcrProjectId}/id-document:${params.imageTag}"
-      targetDockerImage  = "eu.gcr.io/${params.targetGcrProjectId}/id-document:${params.imageTag}"
+      sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
+      targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
     }
     agent none
     stages {
@@ -13,7 +13,7 @@ def call(config) {
         steps {
           script {
               timeout(time:5, unit:'DAYS') {
-                input message:'Create and deploy new release image?'
+                input message:"Push and deploy new release image with tag \"${params.imageTag}\"?"
               }
           }
         }
@@ -51,7 +51,7 @@ def call(config) {
         }
         steps {
           script {
-            docker.withRegistry("https://eu.gcr.io", "gcr:${params.gcrCredentialsId}") {
+            docker.withRegistry("https://eu.gcr.io", "gcr:${config.gcrCredentialsId}") {
 
               docker.image(sourceDockerImage).pull()
               sh "docker tag ${sourceDockerImage} ${targetDockerImage}"
