@@ -81,6 +81,7 @@ def call(Map parameters = [:], body) {
         resources:
           limits:
             ephemeral-storage: 3Gi
+            memory: 512Mi
           requests:
             ephemeral-storage: 3Gi
       - name: helm
