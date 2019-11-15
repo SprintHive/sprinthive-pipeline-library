@@ -57,7 +57,13 @@ def call(config) {
         stage('Build docker image') {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ./${config.subModuleName}"
+                    if (config.subModuleName != null) {
+                        dir("${env.WORKSPACE}/${config.subModuleName}") {
+                            sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                        }
+                    } else {
+                        sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
+                    }
                 }
             }
         }
