@@ -3,7 +3,7 @@ def call(Map parameters = [:], body) {
     def defaultLabel = buildId('nodejs')
     def label = parameters.get('label', defaultLabel)
 
-    def nodejsImage = parameters.get('nodejsImage', 'mhart/alpine-node:8')
+    def nodejsImage = parameters.get('nodejsImage', 'node:12-alpine')
     def dockerImage = parameters.get('dockerImage', 'docker:stable')
     def clairScannerImage = parameters.get('clairScannerImage', 'objectiflibre/clair-scanner:latest')
     def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.13.0')
@@ -80,7 +80,6 @@ def call(Map parameters = [:], body) {
         command:
         - cat
         tty: true
-        workingDir: /home/jenkins/
       volumes:
       - name: docker-socket
         hostPath:
