@@ -52,7 +52,6 @@ def call(config) {
         steps {
           script {
             docker.withRegistry("https://eu.gcr.io", "gcr:${config.gcrCredentialsId}") {
-
               docker.image(sourceDockerImage).pull()
               sh "docker tag ${sourceDockerImage} ${targetDockerImage}"
               docker.image(targetDockerImage).push()
