@@ -97,6 +97,8 @@ def call(Map parameters = [:], body) {
         emptyDir: {}
     """
     ) {
-    body()
-  }
+        node(label) {
+            body()
+        }
+    }
 }
