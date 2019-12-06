@@ -11,6 +11,7 @@
  * @param config.requirePromotionApproval: (Optional) Request approval before promoting to the promotion stage
  * @param config.remoteTriggerCredentials: The Jenkins credentials that contain the authentication token for the remote pipeline trigger
  * @param config.remoteHostName: The hostname of the remote Jenkins instance (e.g. prod.jenkins.acme.com)
+ * @param config.remoteJob: The remote job to trigger (e.g. SprintHive/sprinthive-console)
  * @return
  */
 def call(config) {
@@ -45,7 +46,7 @@ def call(config) {
 
   stage("Trigger ${config.promotionStageName} Pipeline") {
     withCredentials([string(credentialsId: config.remoteTriggerCredentials, variable: 'token')]) {
-      httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'Authorization', value: "Bearer $token"]], httpMode: 'POST', requestBody: "{\"triggerJob\": \"${config.application}\", \"imageTag\": \"${params.imageTag}\"}", responseHandle: 'NONE', url: "https://${config.remoteHostName}/generic-webhook-trigger/invoke"
+      httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'Authorization', value: "Bearer $token"]], httpMode: 'POST', requestBody: "{\"triggerJob\": \"${config.remoteJob}\", \"imageTag\": \"${params.imageTag}\"}", responseHandle: 'NONE', url: "https://${config.remoteHostName}/generic-webhook-trigger/invoke"
     }
   }
 }
