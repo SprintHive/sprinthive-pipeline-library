@@ -5,7 +5,7 @@ def call(config) {
     def dockerImage
     def targetNamespace
 
-    javaNode {
+    ciNode {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         targetNamespace = envInfo.deployStage
