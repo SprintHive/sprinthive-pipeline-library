@@ -4,7 +4,7 @@ def call(config) {
     def versionTag = ''
     def dockerImage
 
-    ciNode {
+    dockerNode {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
