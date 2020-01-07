@@ -36,14 +36,15 @@ def call(config) {
       }
     }
 
-    stage("Helm Deploy") {
-      helmDeploy([
-              releaseName      : config.application,
-              namespace        : config.namespace,
-              chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-              imageTag         : params.imageTag,
-              chartRepoOverride: config.chartRepoOverride
-      ])
+    for (namespace in config.namespaces) {
+      stage("Helm Deploy: $namespace") {
+        helmDeploy([
+                releaseName      : config.application,
+                namespace        : namespace,
+                chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                imageTag         : params.imageTag
+        ])
+      }
     }
   }
 }
