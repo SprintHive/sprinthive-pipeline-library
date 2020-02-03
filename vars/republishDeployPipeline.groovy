@@ -11,6 +11,7 @@
  * @param config.chartRepoOverride: (Optional) Override the helm chart repo used to fetch the helm chart
  * @param config.requireReleaseApproval: (Optional) Request approval before releasing into the environment
  * @param config.nextStageName: The environment stage name that will be deployed into
+ * @param config.skipDeploy: Deployment will skip Helm Deploy stage
  * @return
  */
 def call(config) {
@@ -36,14 +37,16 @@ def call(config) {
       }
     }
 
-    for (namespace in config.namespaces) {
-      stage("Helm Deploy: $namespace") {
-        helmDeploy([
-                releaseName      : config.application,
-                namespace        : namespace,
-                chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-                imageTag         : params.imageTag
-        ])
+    if (config.skipDeploy != true) {
+      for (namespace in config.namespaces) {
+        stage("Helm Deploy: $namespace") {
+          helmDeploy([
+                  releaseName      : config.application,
+                  namespace        : namespace,
+                  chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                  imageTag         : params.imageTag
+          ])
+        }
       }
     }
   }
