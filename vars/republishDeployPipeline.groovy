@@ -2,7 +2,7 @@
 
 /**
  * @param config.application: The application being deployed
- * @param config.namespace: The kubernetes namespace into which the application should be deployed
+ * @param config.namespace: (Optional) if skipDeploy is true. The kubernetes namespace into which the application should be deployed.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
  *        repository and publish to the target GCR repository
  * @param config.sourceGcrProjectId: The GCP project id of the project with the source GCR repository
