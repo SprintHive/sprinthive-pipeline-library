@@ -11,7 +11,7 @@
  * @param config.chartRepoOverride: (Optional) Override the helm chart repo used to fetch the helm chart
  * @param config.requireReleaseApproval: (Optional) Request approval before releasing into the environment
  * @param config.nextStageName: The environment stage name that will be deployed into
- * @param config.skipDeploy: Deployment will skip Helm Deploy stage
+ * @param config.skipDeploy: (Optional) Deployment will skip Helm Deploy stage
  * @return
  */
 def call(config) {
