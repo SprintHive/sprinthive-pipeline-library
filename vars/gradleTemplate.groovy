@@ -5,7 +5,7 @@ def call(Map parameters = [:], body) {
     def label = parameters.get('label', defaultLabel)
 
     def gradleImage = parameters.get('gradleImage', 'bitstack701/base-gradle:v3.0.2')
-    def dockerImage = parameters.get('dockerImage', 'docker:stable')
+    def dockerImage = parameters.get('dockerImage', 'docker:19.03.8')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with gradle and docker"

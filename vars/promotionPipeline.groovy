@@ -29,7 +29,7 @@ def call(config) {
   spec:
     containers:
     - name: docker
-      image: docker:stable
+      image: docker:19.03.8
       command:
       - cat
       tty: true

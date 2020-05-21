@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
 
     def nodejsImage = parameters.get('nodejsImage', 'node:12-alpine')
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
-    def dockerImage = parameters.get('dockerImage', 'docker:stable')
+    def dockerImage = parameters.get('dockerImage', 'docker:19.03.8')
     def clairScannerImage = parameters.get('clairScannerImage', 'objectiflibre/clair-scanner:latest')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
