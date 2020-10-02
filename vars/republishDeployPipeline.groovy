@@ -2,7 +2,8 @@
 
 /**
  * @param config.application: The application being deployed
- * @param config.namespace: (Optional) if skipDeploy is true. The kubernetes namespace into which the application should be deployed.
+ * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed without manual approval.
+ * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
  *        repository and publish to the target GCR repository
  * @param config.sourceGcrProjectId: The GCP project id of the project with the source GCR repository
@@ -38,14 +39,33 @@ def call(config) {
     }
 
     if (config.skipDeploy != true) {
-      for (namespace in config.namespaces) {
-        stage("Helm Deploy: $namespace") {
+      for (namespacePreProd in config.namespacesPreProd) {
+        stage("Helm Deploy: $namespacePreProd") {
           helmDeploy([
                   releaseName      : config.application,
-                  namespace        : namespace,
+                  namespace        : namespacePreProd,
                   chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
                   imageTag         : params.imageTag
           ])
+        }
+      }
+
+      if (config.namespacesProd.size() > 0) {
+        stage("Prod deploy approval") {
+          timeout(time: 5, unit: 'DAYS') {
+            input message: "Deploy to Prod Namespaces?"
+          }
+        }
+        
+        for (namespaceProd in config.namespacesProd) {
+          stage("Helm Deploy: $namespaceProd") {
+            helmDeploy([
+                    releaseName      : config.application,
+                    namespace        : namespaceProd,
+                    chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                    imageTag         : params.imageTag
+            ])
+          }
         }
       }
     }
