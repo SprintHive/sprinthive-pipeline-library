@@ -16,7 +16,7 @@ def call(config) {
             versionTag = getNewVersion{}
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
-            container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'nodejs') {
+            container(name: "nodejs") {
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
@@ -29,7 +29,7 @@ def call(config) {
         stage('Build docker image') {
             container('docker') {
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    sh "docker build -t ${dockerImage} ."
+                    sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
                 }
             }
         }
