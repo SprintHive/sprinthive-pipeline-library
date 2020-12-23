@@ -6,7 +6,7 @@ def call(Map parameters = [:], body) {
     def nodejsImage = parameters.get('nodejsImage', 'node:12-alpine')
     def dockerImage = parameters.get('dockerImage', 'docker:19.03.8')
     def clairScannerImage = parameters.get('clairScannerImage', 'objectiflibre/clair-scanner:latest')
-    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.13.0')
+    def helmImage = parameters.get('helmImage', 'sprinthivesa/k8s-helm:v2.17.0')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with node and docker"
