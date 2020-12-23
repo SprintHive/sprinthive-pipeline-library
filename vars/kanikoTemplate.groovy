@@ -6,7 +6,7 @@ def call(Map parameters = [:], body) {
 
     def skaffoldImage = parameters.get('skaffoldImage', 'gcr.io/k8s-skaffold/skaffold:latest')
     def jnlpImage = parameters.get('jnlpImage', 'jenkins/jnlp-slave:latest')
-    def helmImage = parameters.get('helmImage', 'lachlanevenson/k8s-helm:v2.9.1')
+    def helmImage = parameters.get('helmImage', 'sprinthivesa/k8s-helm:v2.17.0')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting pod with kaniko and helm"
