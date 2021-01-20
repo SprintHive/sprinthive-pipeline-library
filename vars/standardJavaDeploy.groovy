@@ -50,9 +50,11 @@ def call(config) {
 
         if (config.sonarQubeEnabled) {
             stage('SonarQube') {
-			    withSonarQubeEnv() {
-				    sh 'gradle sonarqube'
-			    }
+                container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
+                    withSonarQubeEnv() {
+                        sh 'gradle sonarqube'
+                    }
+                }
             }
         }
 
