@@ -48,6 +48,14 @@ def call(config) {
             }
         }
 
+        if (config.sonarQubeEnabled) {
+            stage('SonarQube') {
+			    withSonarQubeEnv() {
+				    sh './gradlew sonarqube'
+			    }
+            }
+        }
+
         if (config.jacocoEnabled) {
             stage('JaCoCo') {
                 jacoco exclusionPattern: '**/*Test.class', inclusionPattern: '**/*.class', sourceExclusionPattern: 'generated/**/*.java,generated/**/*.kt', sourceInclusionPattern: '**/*.java,**/*.kt', sourcePattern: '**/src/main/java,**/src/main/kotlin'
