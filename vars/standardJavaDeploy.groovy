@@ -51,7 +51,7 @@ def call(config) {
         if (config.sonarQubeEnabled) {
             stage('SonarQube') {
 			    withSonarQubeEnv() {
-				    sh './gradlew sonarqube'
+				    sh 'gradle sonarqube'
 			    }
             }
         }
