@@ -54,7 +54,7 @@ def call(config) {
             )
             container('gradle') {
                 if (env.INTEGRATION_TEST_SPRING_PROFILES == null) {
-                    sh "gradle -i integrationTest -pProfiles=integtest"
+                    sh "gradle -i integrationTest -Pprofiles=integtest"
                 } else {
                     sh "gradle -i integrationTest -Pprofiles=${env.INTEGRATION_TEST_SPRING_PROFILES}"
                 }
