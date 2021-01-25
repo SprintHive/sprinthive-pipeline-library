@@ -21,14 +21,16 @@ def call(config) {
   targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
   if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
-    for (namespaceTest in config.namespacesTest) {
-      stage("Helm Deploy: $namespaceTest") {
-        helmDeploy([
-                releaseName      : config.application,
-                namespace        : namespaceTest,
-                chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-                imageTag         : params.imageTag
-        ])
+    cdNode {
+      for (namespaceTest in config.namespacesTest) {
+        stage("Helm Deploy: $namespaceTest") {
+          helmDeploy([
+                  releaseName: config.application,
+                  namespace  : namespaceTest,
+                  chartName  : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                  imageTag   : params.imageTag
+          ])
+        }
       }
     }
   }
