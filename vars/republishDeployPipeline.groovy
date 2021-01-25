@@ -53,11 +53,7 @@ def call(config) {
               credentialsId: "bitbucket",
             )
             container('gradle') {
-                if (env.INTEGRATION_TEST_SPRING_PROFILES == null) {
-                    sh "gradle -i integrationTest -Pprofiles=integtest"
-                } else {
-                    sh "gradle -i integrationTest -Pprofiles=${env.INTEGRATION_TEST_SPRING_PROFILES}"
-                }
+              sh "gradle -i integrationTest --args='--spring.profiles.active=integtest'"
             }
           }
         }
