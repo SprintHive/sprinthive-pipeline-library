@@ -16,7 +16,9 @@ def call(config) {
         }
 
         stage('Compile source') {
-            versionTag = getNewVersion{}
+            shortCommitSha = getNewVersion{}
+            appVersion = getAppVersion()
+            versionTag = "${appVersion}-${shortCommitSha}"
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
@@ -132,7 +134,7 @@ def call(config) {
     if (env.POST_BUILD_TRIGGER_JOB != null) {
         stage("Trigger ${env.POST_BUILD_TRIGGER_JOB}") {
 
-            build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'IMAGE_TAG', value: versionTag), string(name: 'imageTag', value: versionTag), string(name: 'CHANGE_LOG', value: changeLog())], wait: false
+            build job: env.POST_BUILD_TRIGGER_JOB, parameters: [string(name: 'imageTag', value: versionTag), string(name: 'changeLog', value: changeLog()), string(name: 'sourceBuildNumber', value: env.BUILD_NUMBER)], wait: false
         }
     }
 
