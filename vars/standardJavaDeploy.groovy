@@ -17,7 +17,7 @@ def call(config) {
 
         stage('Compile source') {
             shortCommitSha = getNewVersion{}
-            appVersion = getAppVersion()
+            appVersion = javaAppVersion()
             versionTag = "${appVersion}-${shortCommitSha}"
             dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
