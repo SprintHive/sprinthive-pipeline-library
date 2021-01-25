@@ -1,27 +1,24 @@
 #!/usr/bin/groovy
 
 def call(config) {
-    def versionTag = ''
+    def versionTag
+    def shortCommitSha
+    def appVersion
     def dockerImage
     def targetNamespace
 
     javaNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
+        shortCommitSha = getNewVersion{}
         targetNamespace = envInfo.deployStage
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
-        if (envInfo.multivariateTest != null) {
-            echo "Multivariate test: ${envInfo.multivariateTest}"
-        }
+        echo "Build commit sha is: ${shortCommitSha}"
 
         stage('Compile source') {
-            shortCommitSha = getNewVersion{}
-            appVersion = javaAppVersion()
-            versionTag = "${appVersion}-${shortCommitSha}"
-            dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
-
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
+                appVersion = javaAppVersion()
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle bootJar"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
@@ -68,6 +65,9 @@ def call(config) {
 
         stage('Build docker image') {
             container('docker') {
+                versionTag = "${appVersion}-${shortCommitSha}"
+                dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
+
                 docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
                     def dockerBuildCommand = "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
                     if (config.subModuleName != null) {
