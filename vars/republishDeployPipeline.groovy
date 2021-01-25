@@ -2,7 +2,8 @@
 
 /**
  * @param config.application: The application being deployed
- * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed without manual approval.
+ * @param config.namespacesTest: (Optional) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
+ * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
  *        repository and publish to the target GCR repository
@@ -19,10 +20,53 @@ def call(config) {
   sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
   targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
+  if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
+    for (namespaceTest in config.namespacesTest) {
+      stage("Helm Deploy: $namespaceTest") {
+        helmDeploy([
+                releaseName      : config.application,
+                namespace        : namespaceTest,
+                chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                imageTag         : params.imageTag
+        ])
+      }
+    }
+  }
+
+  if (config.integrationTest != null && config.integrationTest.enabled) {
+    stage("Integration test") {
+      cdNode {
+        git(
+          url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git",
+          branch: config.integrationTest.branch,
+          credentialsId: "bitbucket",
+        )
+        podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
+        podLabel = "integ-test-${config.application}"
+        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
+          node(podLabel) {
+            git(
+              url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git",
+              branch: config.integrationTest.branch,
+              credentialsId: "bitbucket",
+            )
+            container('gradle') {
+                if (env.INTEGRATION_TEST_SPRING_PROFILES == null) {
+                    sh "gradle -i integrationTest -pProfiles=integtest"
+                } else {
+                    sh "gradle -i integrationTest -Pprofiles=${env.INTEGRATION_TEST_SPRING_PROFILES}"
+                }
+            }
+          }
+        }
+      }
+    }
+  }
+
   if (config.requireReleaseApproval == true) {
     stage("${config.nextStageName} Release Approval") {
       timeout(time: 5, unit: 'DAYS') {
-        input message: "Start ${config.nextStageName} release pipeline for ${config.application} with image tag '${params.imageTag}'?"
+        input message: "Start ${config.nextStageName} release pipeline for ${config.application} with image tag '${params.imageTag}' [source QA job ${params.sourceJobId}]?"
       }
     }
   }
