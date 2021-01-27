@@ -21,6 +21,11 @@ def call(config) {
   sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
   targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
+  if (!params.changeLog.isEmpty()) {
+    println("Change log:")
+    println(params.changeLog)
+  }
+
   if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
     cdNode {
       for (namespaceTest in config.namespacesTest) {
