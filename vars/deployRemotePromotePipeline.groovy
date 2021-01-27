@@ -46,7 +46,7 @@ def call(config) {
 
   stage("Trigger ${config.promotionStageName} Pipeline") {
     withCredentials([string(credentialsId: config.remoteTriggerCredentials, variable: 'token')]) {
-      httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'Authorization', value: "Bearer " + token]], httpMode: 'POST', requestBody: "{\"triggerJob\": \"${config.remoteJob}\", \"imageTag\": \"${params.imageTag}\", \"sourceBuildNumber\": \"${env.BUILD_NUMBER}\", \"changeLog\": \"${params.changeLog}\"", responseHandle: 'NONE', url: "https://${config.remoteHostName}/generic-webhook-trigger/invoke"
+      httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'Authorization', value: "Bearer ${token}"]], httpMode: 'POST', requestBody: "{\"triggerJob\": \"${config.remoteJob}\", \"imageTag\": \"${params.imageTag}\", \"sourceBuildNumber\": \"${env.BUILD_NUMBER}\", \"changeLog\": \"${params.changeLog}\"}", responseHandle: 'NONE', url: "https://${config.remoteHostName}/generic-webhook-trigger/invoke"
     }
   }
 }
