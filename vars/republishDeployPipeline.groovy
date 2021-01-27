@@ -52,8 +52,8 @@ def call(config) {
               branch: config.integrationTest.branch,
               credentialsId: "bitbucket",
             )
-            container('gradle') {
-              sh "gradle -i integrationTest --args='--spring.profiles.active=integtest'"
+            container('test') {
+              sh "./integrationTest.sh"
             }
           }
         }
