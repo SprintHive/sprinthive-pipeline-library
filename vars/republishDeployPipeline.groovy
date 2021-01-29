@@ -21,7 +21,7 @@ def call(config) {
   sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
   targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
-  if (!params.changeLog.isEmpty()) {
+  if (params.changeLog != null && !params.changeLog.isEmpty()) {
     println("Change log:")
     println(params.changeLog)
   }
