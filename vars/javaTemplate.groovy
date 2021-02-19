@@ -53,6 +53,9 @@ def call(Map parameters = [:], body) {
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run/docker.sock
+        resources:
+          requests:
+            memory: 128Mi
       - name: clairscanner
         image: ${clairScannerImage}
         command:
@@ -81,9 +84,9 @@ def call(Map parameters = [:], body) {
         resources:
           limits:
             ephemeral-storage: 3Gi
-            memory: 512Mi
           requests:
             ephemeral-storage: 3Gi
+            memory: 128Mi
       - name: helm
         image: ${helmImage}
         env:
@@ -92,6 +95,9 @@ def call(Map parameters = [:], body) {
         command:
         - cat
         tty: true
+        resources:
+          requests:
+            memory: 128Mi
       - name: gradle
         image: ${gradleImage}
         command:
@@ -103,6 +109,9 @@ def call(Map parameters = [:], body) {
         volumeMounts:
         - name: maven-settings
           mountPath: /root/.m2
+        resources:
+          requests:
+            memory: 2Gi
       volumes:
       - name: docker-socket
         hostPath:
