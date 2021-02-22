@@ -54,11 +54,12 @@ def call(config) {
         podLabel = "integ-test-${config.application}"
         podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
           node(podLabel) {
-            git(
-              url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git",
-              branch: config.integrationTest.branch,
-              credentialsId: "bitbucket",
-            )
+            checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: config.integrationTest.branch]],
+                    extensions: [[$class: 'GitLFSPull']],
+                    userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
+            ])
             container('test') {
               sh "./integrationTest.sh"
             }
