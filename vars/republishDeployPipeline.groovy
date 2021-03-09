@@ -67,7 +67,7 @@ def call(config) {
                   exports.add("${envVar.key}=${envVar.value}")
                 }
               }
-              sh "${exports.join(" ")} ./integrationTest.sh"
+              sh "${exports.join(" ")} ./jenkins/integrationTest.sh"
             }
           }
         }
