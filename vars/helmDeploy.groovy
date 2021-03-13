@@ -32,8 +32,10 @@ def call(config) {
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/service-charts.git"]]
     ])
 
-    def envValueOverrides = "service-charts/environments/${config.namespace}/${releaseName}.yaml"
+    def envValueOverrides = "environments/${config.namespace}/${releaseName}.yaml"
+    println("Checking if this exists: $envValueOverrides")
     if (fileExists(envValueOverrides)) {
+        println("Using base chart override: $envValueOverrides")
         chartRepo = "https://sprinthive-service-base-charts.storage.googleapis.com"
         overrides += " -f $envValueOverrides"
     }
