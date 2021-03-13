@@ -23,8 +23,21 @@ def call(config) {
         chartEnv = config.namespace
     }
 
-    def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${chartEnv}-charts.storage.googleapis.com"
     def releaseName = config.releaseName
+    def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${chartEnv}-charts.storage.googleapis.com"
+    checkout([
+            $class: 'GitSCM',
+            branches: [[name: "env-values"]],
+            extensions: [[$class: 'GitLFSPull']],
+            userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/service-charts.git"]]
+    ])
+
+    def envValueOverrides = "service-charts/environments/${config.namespace}/${releaseName}.yaml"
+    if (fileExists(envValueOverrides)) {
+        chartRepo = "https://sprinthive-service-base-charts.storage.googleapis.com"
+        overrides += " -f $envValueOverrides"
+    }
+
     if (config.multivariateTest != null) {
         releaseName += "-" + config.multivariateTest
     }
