@@ -9,6 +9,13 @@ def call(config) {
         overrides += " --set global.image.tag=${config.imageTag}"
     }
 
+    def helmfileRepo
+    if (config.helmfileRepoOverride != null) {
+      helmfileRepo = config.helmfileRepoOverride
+    } else {
+        helmfileRepo = "https://bitbucket.org/sprinthive/service-charts.git"
+    }
+
     def chartEnv = env.CHART_ENVIRONMENT
     if (!chartEnv) {
         chartEnv = config.namespace
@@ -18,7 +25,7 @@ def call(config) {
     checkout([
             $class: 'GitSCM',
             branches: [[name: "env-values"]],
-            userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/service-charts.git"]]
+            userRemoteConfigs: [[credentialsId: 'bitbucket', url: helmfileRepo]]
     ])
 
     container('helm') {

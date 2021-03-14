@@ -11,7 +11,7 @@
  * @param config.sourceGcrProjectId: The GCP project id of the project with the source GCR repository
  * @param config.targetGcrProjectId: The GCP project id of the project with the target GCR repository
  * @param config.chartNameOverride: (Optional) The helm chart to use to deploy the application
- * @param config.chartRepoOverride: (Optional) Override the helm chart repo used to fetch the helm chart
+ * @param config.helmfileRepoOverride: The git repository containing the application helmfiles
  * @param config.requireReleaseApproval: (Optional) Request approval before releasing into the environment
  * @param config.nextStageName: The environment stage name that will be deployed into
  * @param config.skipDeploy: (Optional) Deployment will skip Helm Deploy stage
@@ -31,10 +31,11 @@ def call(config) {
       for (namespaceTest in config.namespacesTest) {
         stage("Helm Deploy: $namespaceTest") {
           helmDeploy([
-                  releaseName: config.application,
-                  namespace  : namespaceTest,
-                  chartName  : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-                  imageTag   : params.imageTag
+                  releaseName          : config.application,
+                  namespace            : namespaceTest,
+                  chartName            : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                  imageTag             : params.imageTag,
+                  helmfileRepoOverride : config.helmfileRepoOverride
           ])
         }
       }
@@ -98,10 +99,11 @@ def call(config) {
       for (namespacePreProd in config.namespacesPreProd) {
         stage("Helm Deploy: $namespacePreProd") {
           helmDeploy([
-                  releaseName      : config.application,
-                  namespace        : namespacePreProd,
-                  chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-                  imageTag         : params.imageTag
+                  releaseName          : config.application,
+                  namespace            : namespacePreProd,
+                  chartName            : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                  imageTag             : params.imageTag,
+                  helmfileRepoOverride : config.helmfileRepoOverride
           ])
         }
       }
@@ -116,10 +118,11 @@ def call(config) {
         for (namespaceProd in config.namespacesProd) {
           stage("Helm Deploy: $namespaceProd") {
             helmDeploy([
-                    releaseName      : config.application,
-                    namespace        : namespaceProd,
-                    chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-                    imageTag         : params.imageTag
+                    releaseName          : config.application,
+                    namespace            : namespaceProd,
+                    chartName            : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+                    imageTag             : params.imageTag,
+                    helmfileRepoOverride : config.helmfileRepoOverride
             ])
           }
         }

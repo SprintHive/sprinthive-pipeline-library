@@ -5,7 +5,7 @@
  * @param config.namespace: The kubernetes namespace into which the application should be deployed
  * @param config.imageTag: (Optional) The image tag that should be deployed
  * @param config.chartNameOverride: (Optional) The helm chart to use to deploy the application
- * @param config.chartRepoOverride: (Optional) Override the helm chart repo used to fetch the helm chart
+ * @param config.helmfileRepoOverride: The git repository containing the application helmfiles
  * @param config.requireReleaseApproval: (Optional) Request approval before releasing into the environment
  * @param config.nextStageName: The environment stage name that will be deployed into
  * @return
@@ -27,11 +27,11 @@ def call(config) {
   cdNode {
     stage("Helm Deploy") {
       helmDeploy([
-              releaseName      : config.application,
-              namespace        : config.namespace,
-              chartName        : config.chartNameOverride != null ? config.chartNameOverride : config.application,
-              imageTag         : config.imageTag,
-              chartRepoOverride: config.chartRepoOverride
+              releaseName          : config.application,
+              namespace            : config.namespace,
+              chartName            : config.chartNameOverride != null ? config.chartNameOverride : config.application,
+              imageTag             : config.imageTag,
+              helmfileRepoOverride : config.helmfileRepoOverride
       ])
     }
   }
