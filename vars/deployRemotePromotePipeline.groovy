@@ -3,7 +3,6 @@
 /**
  * @param config.application: The application being deployed
  * @param config.namespace: The kubernetes namespace into which the application should be deployed
- * @param config.chartNameOverride: (Optional) The helm chart to use to deploy the application
  * @param config.helmfileRepoOverride: (Optional) The git repository containing the application helmfiles
  * @param config.requireReleaseApproval: (Optional) Request approval before releasing into the environment
  * @param config.nextStageName: The environment stage name that will be deployed into
@@ -29,7 +28,6 @@ def call(config) {
       helmDeploy([
               releaseName          : config.application,
               namespace            : config.namespace,
-              chartName            : config.chartNameOverride != null ? config.chartNameOverride : config.application,
               imageTag             : params.imageTag,
               helmfileRepoOverride : config.helmfileRepoOverride
       ])
