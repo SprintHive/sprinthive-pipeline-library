@@ -2,7 +2,6 @@
 
 def call(config) {
     def overrides = ""
-    def chartVersion = ""
     for (String override : config.overrides) {
         overrides += " --set " + override
     }
@@ -10,44 +9,20 @@ def call(config) {
         overrides += " --set global.image.tag=${config.imageTag}"
     }
 
-    if (config.chartVersion) {
-        chartVersion = " --version ${config.chartVersion}"
-    }
-
-    if (config.multivariateTest) {
-        overrides += " --set ${config.chartName}.multivariateTest=" + config.multivariateTest
-    }
-
     def chartEnv = env.CHART_ENVIRONMENT
     if (!chartEnv) {
         chartEnv = config.namespace
     }
-
     def releaseName = config.releaseName
-    def chartRepo = config.chartRepoOverride != null ? config.chartRepoOverride : "https://sprinthive-service-${chartEnv}-charts.storage.googleapis.com"
+
     checkout([
             $class: 'GitSCM',
             branches: [[name: "env-values"]],
-            extensions: [[$class: 'GitLFSPull']],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/service-charts.git"]]
     ])
 
-    def envValueOverrides = "environments/${config.namespace}/${releaseName}.yaml"
-    println("Checking if this exists: $envValueOverrides")
-    if (fileExists(envValueOverrides)) {
-        println("Using base chart override: $envValueOverrides")
-        chartRepo = "https://sprinthive-service-base-charts.storage.googleapis.com"
-        overrides += " -f $envValueOverrides"
-    }
-
-    if (config.multivariateTest != null) {
-        releaseName += "-" + config.multivariateTest
-    }
-
     container('helm') {
-        sh "helm init --client-only"
-        sh "helm repo add service-charts $chartRepo"
-        def statusCode = sh script:"helm --tiller-namespace ${config.namespace} upgrade ${releaseName} --namespace ${config.namespace} -i --reset-values --wait service-charts/${config.chartName}${chartVersion} ${overrides}", returnStatus:true
+        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --tiller-namespace ${config.namespace} --selector ${releaseName} --namespace ${config.namespace} sync --wait ${overrides}", returnStatus:true
 
         if (statusCode != 0) {
             sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
