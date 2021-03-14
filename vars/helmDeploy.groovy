@@ -29,7 +29,7 @@ def call(config) {
     ])
 
     container('helm') {
-        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${releaseName} --namespace ${config.namespace} sync --wait ${overrides} --args \"--tiller-namespace ${config.namespace}\"", returnStatus:true
+        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${config.chartName} --namespace ${config.namespace} sync --wait ${overrides} --args \"--tiller-namespace ${config.namespace}\"", returnStatus:true
 
         if (statusCode != 0) {
             sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
