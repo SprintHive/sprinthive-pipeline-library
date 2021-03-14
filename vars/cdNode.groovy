@@ -3,7 +3,7 @@ def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('cd'))
 
     def dockerImage = parameters.get('dockerImage', 'docker:19.03.8')
-    def helmImage = parameters.get('helmImage', 'sprinthivesa/k8s-helm:v2.17.0')
+    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helm:v0.138.7')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting CD node"
