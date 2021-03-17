@@ -24,7 +24,7 @@ def call(config) {
 
     checkout([
             $class: 'GitSCM',
-            branches: [[name: "saas-956"]],
+            branches: [[name: "master"]],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: helmfileRepo]]
     ])
 
