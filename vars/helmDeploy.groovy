@@ -27,7 +27,6 @@ def call(config) {
             branches: [[name: "master"]],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: helmfileRepo]]
     ])
-
     container('helm') {
         def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${releaseName} --namespace ${config.namespace} sync --wait ${overrides} --args \"--tiller-namespace ${config.namespace}\"", returnStatus:true
 
@@ -36,4 +35,5 @@ def call(config) {
             error "The deployment failed and was rolled back"
         }
     }
+    containerLog 'helm'
 }
