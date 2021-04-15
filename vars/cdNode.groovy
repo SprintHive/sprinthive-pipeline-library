@@ -32,6 +32,7 @@ def call(Map parameters = [:], body) {
           command:
           - cat
           tty: true
+          stdin: true
         volumes:
         - name: docker-socket
           hostPath:

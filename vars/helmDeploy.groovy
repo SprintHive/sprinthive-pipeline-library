@@ -35,5 +35,4 @@ def call(config) {
             error "The deployment failed and was rolled back"
         }
     }
-    containerLog 'helm'
 }
