@@ -120,6 +120,7 @@ def call(Map parameters = [:], body) {
       - name: maven-settings
         configMap:
           name: jenkins-maven-settings
+          optional: true
       - name: clair-whitelist
         emptyDir: {}
     """
