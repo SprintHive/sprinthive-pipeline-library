@@ -2,7 +2,7 @@
 
 /**
  * @param config.application: The application being deployed
- * @param config.integrationTest: (Optional) The integration test configuration (fields: enabled, repository, branch, envVars). If set and enabled, this will run the integration tests prior to deploying past test environments.
+ * @param config.integrationTest: (Optional) The integration test configuration (fields: enabled, repository, branch, envVars, namespace). If set and enabled, this will run the integration tests prior to deploying past test environments.
  * @param config.namespacesTest: (Optional) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
@@ -41,6 +41,7 @@ def call(config) {
   }
 
   if (config.integrationTest != null && config.integrationTest.enabled) {
+    integNamespace = config.integrationTest.namespace != null ? config.integrationTest.namespace ? 'integ-test'
     stage("Integration test") {
       cdNode {
         checkout([
@@ -51,7 +52,7 @@ def call(config) {
         ])
         podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
         podLabel = "integ-test-${config.application}"
-        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
+        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: integNamespace) {
           node(podLabel) {
             checkout([
                     $class: 'GitSCM',
