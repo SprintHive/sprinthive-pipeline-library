@@ -6,7 +6,7 @@ def call(config) {
         overrides += " --set " + override
     }
     if (config.imageTag) {
-        overrides += " --set global.image.tag=${config.imageTag}"
+        overrides += " --set-string global.image.tag=${config.imageTag}"
     }
 
     def helmfileRepo
