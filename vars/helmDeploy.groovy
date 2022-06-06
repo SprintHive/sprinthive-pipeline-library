@@ -27,6 +27,7 @@ def call(config) {
 
     container('helm') {
         File pipelineValuesFile = File.createTempFile("pipeline-values",".tmp")
+        sh script:"touch ${pipelineValuesFile.absolutePath}"
         if (config.imageTag) {
             sh script:"echo 'global:\n  image:\n    tag: \"${config.imageTag}\"\n' > ${pipelineValuesFile.absolutePath}"
         }
