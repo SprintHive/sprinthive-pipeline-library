@@ -5,8 +5,8 @@ def call(Map parameters = [:], body) {
     def label = parameters.get('label', defaultLabel)
 
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
-    def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:latest')
-    def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:latest')
+    def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:debug')
+    def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.138.7')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
@@ -24,6 +24,8 @@ def call(Map parameters = [:], body) {
       - name: kaniko
         image: ${kanikoImage}
         command:
+        - busybox
+        args:
         - cat
         tty: true
         resources:
@@ -32,6 +34,8 @@ def call(Map parameters = [:], body) {
       - name: grype-scanner
         image: ${grypeScannerImage}
         command:
+        - busybox
+        args:
         - cat
         tty: true
       - name: helm
