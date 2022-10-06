@@ -4,7 +4,9 @@ def call(config) {
     def versionTag
     def shortCommitSha
     def appVersion
-    def dockerImage
+    def containerImageTagless
+    def containerImage
+    def contextDirectory
     def targetNamespace
 
     javaNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
@@ -63,38 +65,31 @@ def call(config) {
             }
         }
 
-        stage('Build docker image') {
-            container('docker') {
+        stage('Build container image') {
+            container('kaniko') {
                 versionTag = "${appVersion}-${shortCommitSha}"
-                dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
+                containerImageTagless = "${config.dockerTagBase}/${config.componentName}"
+                containerImage = "${containerImageTagless}:${versionTag}"
 
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    def dockerBuildCommand = "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
-                    if (config.subModuleName != null) {
-                        dir("${env.WORKSPACE}/${config.subModuleName}") {
-                            sh dockerBuildCommand
-                        }
-                    } else {
-                        sh dockerBuildCommand
-                    }
+                if (config.subModuleName != null) {
+                    contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
+                } else {
+                    contextDirectory = env.WORKSPACE
                 }
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --no-push"
             }
         }
 
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
-                container('clairscanner') {
-                    sh '/usr/local/bin/clair -w /config/whitelist.yaml -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
-                }
+                grypeScan(containerImage)
             }
         }
 
-        stage('Push docker image') {
-            container('docker') {
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    docker.image(dockerImage).push()
-                    docker.image(dockerImage).push(envInfo.branch)
-                }
+        stage('Push container image') {
+            container('kaniko') {
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT}"
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${envInfo.branch} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT}"
             }
         }
     }
