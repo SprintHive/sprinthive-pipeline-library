@@ -76,7 +76,7 @@ def call(config) {
                 } else {
                     contextDirectory = env.WORKSPACE
                 }
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --no-push"
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text --no-push"
             }
         }
 
@@ -88,8 +88,8 @@ def call(config) {
 
         stage('Push container image') {
             container('kaniko') {
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT}"
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${envInfo.branch} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT}"
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text"
+                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${envInfo.branch} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text"
             }
         }
     }

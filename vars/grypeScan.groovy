@@ -2,6 +2,6 @@
 
 def call(imageName) {
     container('grype-scanner') {
-        sh "grype $imageName"
+        sh "/grype $imageName"
     }
 }
