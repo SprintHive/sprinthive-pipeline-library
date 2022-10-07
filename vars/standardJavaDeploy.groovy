@@ -76,13 +76,13 @@ def call(config) {
                 } else {
                     contextDirectory = env.WORKSPACE
                 }
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text --no-push"
+                sh "/kaniko/executor --context $contextDirectory --tar-path container.tar --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text --no-push"
             }
         }
 
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
-                grypeScan(containerImage)
+                grypeScan("container.tar")
             }
         }
 
