@@ -16,9 +16,6 @@ def call(Map parameters = [:], body) {
     apiVersion: v1
     kind: Pod
     spec:
-      securityContext:
-        runAsUser: 1000
-        fsGroup: 2000
       serviceAccount: jenkins-worker
       containers:
       - name: kaniko
