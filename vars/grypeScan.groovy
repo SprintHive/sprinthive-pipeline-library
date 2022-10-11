@@ -6,6 +6,6 @@ def call(imageName) {
         additionalOptions += "-c grype.yaml"
     }
     container('grype-scanner') {
-        sh "/grype $imageName --fail-on high $additionalOptions"
+        sh "/grype $imageName --fail-on high $additionalOptions -c grype.yaml"
     }
 }
