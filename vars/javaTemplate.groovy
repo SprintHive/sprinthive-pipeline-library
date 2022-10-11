@@ -7,6 +7,7 @@ def call(Map parameters = [:], body) {
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
     def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:debug')
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
+    def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/crane:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.138.7')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
@@ -20,6 +21,16 @@ def call(Map parameters = [:], body) {
       containers:
       - name: kaniko
         image: ${kanikoImage}
+        command:
+        - busybox
+        args:
+        - cat
+        tty: true
+        resources:
+          requests:
+            memory: 128Mi
+      - name: crane
+        image: ${craneImage}
         command:
         - busybox
         args:

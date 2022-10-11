@@ -87,9 +87,9 @@ def call(config) {
         }
 
         stage('Push container image') {
-            container('kaniko') {
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text"
-                sh "/kaniko/executor --context $contextDirectory --destination ${containerImageTagless}:${envInfo.branch} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text"
+            container('crane') {
+                sh "/ko-app/crane container.tar ${containerImageTagless}:${versionTag}"
+                sh "/ko-app/crane container.tar ${containerImageTagless}:${envInfo.branch}"
             }
         }
     }
