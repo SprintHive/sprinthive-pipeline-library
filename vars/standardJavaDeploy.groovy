@@ -66,18 +66,16 @@ def call(config) {
         }
 
         stage('Build container image') {
-            container('kaniko') {
-                versionTag = "${appVersion}-${shortCommitSha}"
-                containerImageTagless = "${config.dockerTagBase}/${config.componentName}"
-                containerImage = "${containerImageTagless}:${versionTag}"
+            versionTag = "${appVersion}-${shortCommitSha}"
+            containerImageTagless = "${config.dockerTagBase}/${config.componentName}"
+            containerImage = "${containerImageTagless}:${versionTag}"
 
-                if (config.subModuleName != null) {
-                    contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
-                } else {
-                    contextDirectory = env.WORKSPACE
-                }
-                sh "/kaniko/executor --context $contextDirectory --tar-path container.tar --destination ${containerImageTagless}:${versionTag} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} --log-format text --no-push"
+            if (config.subModuleName != null) {
+                contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
+            } else {
+                contextDirectory = env.WORKSPACE
             }
+            kanikoBuild(contextDirectory, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
@@ -87,10 +85,8 @@ def call(config) {
         }
 
         stage('Push container image') {
-            container('crane') {
-                sh "/ko-app/gcrane push container.tar ${containerImageTagless}:${versionTag}"
-                sh "/ko-app/gcrane push container.tar ${containerImageTagless}:${envInfo.branch}"
-            }
+            cranePush("container.tar", "${containerImageTagless}:${versionTag}")
+            cranePush("container.tar", "${containerImageTagless}:${envInfo.branch}")
         }
     }
 
