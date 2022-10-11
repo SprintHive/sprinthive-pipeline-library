@@ -4,10 +4,10 @@ def call(config) {
     def versionTag
     def shortCommitSha
     def appVersion
-    def containerImageTagless
     def containerImage
     def contextDirectory
     def targetNamespace
+    def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
 
     javaNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
@@ -67,8 +67,6 @@ def call(config) {
 
         stage('Build container image') {
             versionTag = "${appVersion}-${shortCommitSha}"
-            containerImageTagless = "${config.dockerTagBase}/${config.componentName}"
-            containerImage = "${containerImageTagless}:${versionTag}"
 
             if (config.subModuleName != null) {
                 contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
