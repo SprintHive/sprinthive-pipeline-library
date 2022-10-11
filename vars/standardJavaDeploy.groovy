@@ -88,8 +88,8 @@ def call(config) {
 
         stage('Push container image') {
             container('crane') {
-                sh "/ko-app/crane container.tar ${containerImageTagless}:${versionTag}"
-                sh "/ko-app/crane container.tar ${containerImageTagless}:${envInfo.branch}"
+                sh "/ko-app/crane push container.tar ${containerImageTagless}:${versionTag}"
+                sh "/ko-app/crane push container.tar ${containerImageTagless}:${envInfo.branch}"
             }
         }
     }
