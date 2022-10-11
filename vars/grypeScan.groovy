@@ -2,10 +2,10 @@
 
 def call(imageName) {
     def additionalOptions = ""
-    if (new File("grype.yaml").exists()) {
+    if (fileExists("grype.yaml")) {
         additionalOptions += "-c grype.yaml"
     }
     container('grype-scanner') {
-        sh "/grype $imageName --fail-on high $additionalOptions -c grype.yaml"
+        sh "/grype $imageName --fail-on high $additionalOptions"
     }
 }
