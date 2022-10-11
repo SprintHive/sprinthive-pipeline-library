@@ -1,6 +1,6 @@
 #!/usr/bin/groovy
 
-def call(containerTar, destination) {
+def call(destination, containerTar) {
     container('crane') {
         sh "/ko-app/gcrane push $containerTar $destination"
     }

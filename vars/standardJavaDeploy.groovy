@@ -9,7 +9,7 @@ def call(config) {
     def targetNamespace
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
 
-    javaNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         shortCommitSha = getNewVersion{}
@@ -83,8 +83,8 @@ def call(config) {
         }
 
         stage('Push container image') {
-            cranePush("container.tar", "${containerImageTagless}:${versionTag}")
-            cranePush("container.tar", "${containerImageTagless}:${envInfo.branch}")
+            cranePush("${containerImageTagless}:${versionTag}", "container.tar")
+            cranePush("${containerImageTagless}:${envInfo.branch}", "container.tar")
         }
     }
 

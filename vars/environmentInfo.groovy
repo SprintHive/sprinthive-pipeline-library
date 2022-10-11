@@ -6,35 +6,22 @@ def call(scmInfo) {
         error('Git branch is null..')
     }
 
-    def deployStage = null
-    def rawBranch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
-    def branchParts = rawBranch.split('-')
-    def inferredBranch = null
-    def multivariateTest = null
-    // A multivariate test has a branch with naming convention <originbranch-mvt-mvtname>. E.g. dev-mvt-lowagereq
-    if (branchParts.length > 2 && branchParts[1] == "mvt") {
-        inferredBranch = branchParts[0]
-        multivariateTest = branchParts[2]
-    } else {
-        inferredBranch = rawBranch
-    }
+    def deployStage
+    def branch = scmInfo.GIT_BRANCH.substring(scmInfo.GIT_BRANCH.lastIndexOf('/')+1)
 
     if (env.NAMESPACE_OVERRIDE != null) {
         deployStage = env.NAMESPACE_OVERRIDE
     }
-    else if (inferredBranch.equals("dev")) {
+    else if (branch.equals("dev")) {
         deployStage = "dev"
-    } else if (inferredBranch.equals('master')) {
+    } else if (branch.equals('master') || branch.equals('main')) {
         deployStage = 'pre-prod'
     } else {
-        deployStage = inferredBranch
+        deployStage = branch
     }
 
-
-
     return [
-        "branch": inferredBranch,
-        "deployStage": deployStage,
-        "multivariateTest": multivariateTest
+        "branch": branch,
+        "deployStage": deployStage
     ]
 }

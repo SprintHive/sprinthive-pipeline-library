@@ -2,8 +2,8 @@
 def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('cd'))
 
-    def dockerImage = parameters.get('dockerImage', 'docker:19.03.8')
-    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:helm3-v0.140.0')
+    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.138.7')
+    def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
     echo "Starting CD node"
@@ -12,31 +12,29 @@ def call(Map parameters = [:], body) {
       apiVersion: v1
       kind: Pod
       spec:
-        serviceAccount: helm
+        serviceAccount: jenkins-worker
         containers:
-        - name: docker
-          image: ${dockerImage}
+        - name: crane
+          image: ${craneImage}
           command:
+          - busybox
+          args:
           - cat
           tty: true
-          securityContext:
-            privileged: true
-          env:
-          - name: DOCKER_HOST
-            value: unix:///var/run/docker.sock
-          volumeMounts:
-          - name: docker-socket
-            mountPath: /var/run/docker.sock
+          resources:
+            requests:
+              memory: 128Mi
         - name: helm
           image: ${helmImage}
+          env:
+          - name: HELM_HOME
+            value: /tmp
           command:
           - cat
           tty: true
-        volumes:
-        - name: docker-socket
-          hostPath:
-            path: /var/run/docker.sock
-            type: Socket
+          resources:
+            requests:
+              memory: 128Mi
       """
     ) {
         node(label) {

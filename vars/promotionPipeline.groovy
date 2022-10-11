@@ -3,8 +3,8 @@
 def call(config) {
   pipeline {
     environment {
-      sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
-      targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
+      sourceContainerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
+      targetContainerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
     }
     agent none
     stages {
@@ -21,41 +21,30 @@ def call(config) {
       stage("Push image to release") {
         agent {
           kubernetes {
-            defaultContainer 'docker'
-            label 'docker'
+            defaultContainer 'crane'
+            label 'crane'
             yaml """
   apiVersion: v1
   kind: Pod
   spec:
     containers:
-    - name: docker
-      image: docker:19.03.8
+    - name: crane
+      image: gcr.io/go-containerregistry/gcrane:debug
       command:
+      - busybox
+      args:
       - cat
       tty: true
-      securityContext:
-        privileged: true
-      env:
-      - name: DOCKER_HOST
-        value: unix:///var/run/docker.sock
-      volumeMounts:
-      - name: docker-socket
-        mountPath: /var/run/docker.sock
-    volumes:
-    - name: docker-socket
-      hostPath:
-        path: /var/run/docker.sock
-        type: Socket
+      resources:
+        requests:
+          memory: 128Mi
   """
             }
         }
         steps {
           script {
-            docker.withRegistry("https://eu.gcr.io", "gcr:${config.gcrCredentialsId}") {
-              docker.image(sourceDockerImage).pull()
-              sh "docker tag ${sourceDockerImage} ${targetDockerImage}"
-              docker.image(targetDockerImage).push()
-            }
+            cranePull(sourceContainerImage, "container.tar")
+            cranePush(targetContainerImage, "container.tar")
           }
         }
       }
