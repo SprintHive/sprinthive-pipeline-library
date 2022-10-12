@@ -30,7 +30,7 @@ def call(config) {
         }
 
         if (config.containerScanEnabled != false) {
-            grypeScan("container.tar")
+            grypeScan("container.tar", env.WORKSPACE)
         }
 
         stage('Push container image') {

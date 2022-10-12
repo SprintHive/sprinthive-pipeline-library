@@ -17,7 +17,7 @@ def call(config) {
 
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
-                grypeScan("container.tar")
+                grypeScan("container.tar", env.WORKSPACE)
             }
         }
 

@@ -14,9 +14,15 @@ def call(config) {
         def envInfo = environmentInfo(scmInfo)
         shortCommitSha = getNewVersion{}
         targetNamespace = envInfo.deployStage
+        if (config.subModuleName != null) {
+            contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
+        } else {
+            contextDirectory = env.WORKSPACE
+        }
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
         echo "Build commit sha is: ${shortCommitSha}"
+        echo "Context directory is: ${contextDirectory}"
 
         stage('Compile source') {
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
@@ -67,18 +73,12 @@ def call(config) {
 
         stage('Build container image') {
             versionTag = "${appVersion}-${shortCommitSha}"
-
-            if (config.subModuleName != null) {
-                contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
-            } else {
-                contextDirectory = env.WORKSPACE
-            }
             kanikoBuild(contextDirectory, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
-                grypeScan("container.tar")
+                grypeScan("container.tar", contextDirectory)
             }
         }
 
