@@ -17,8 +17,8 @@
  * @return
  */
 def call(config) {
-  sourceDockerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
-  targetDockerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
+  sourceContainerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
+  targetContainerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
   if (params.changeLog != null && !params.changeLog.isEmpty()) {
     println("Change log:")
@@ -84,13 +84,8 @@ def call(config) {
 
   cdNode {
     stage("Push image to ${config.targetGcrProjectId}") {
-      container("docker") {
-        docker.withRegistry("https://eu.gcr.io", "gcr:${config.gcrCredentialsId}") {
-          docker.image(sourceDockerImage).pull()
-          sh "docker tag ${sourceDockerImage} ${targetDockerImage}"
-          docker.image(targetDockerImage).push()
-        }
-      }
+      cranePull(sourceContainerImage, "container.tar")
+      cranePush(targetContainerImage, "container.tar")
     }
 
     if (config.skipDeploy != true) {

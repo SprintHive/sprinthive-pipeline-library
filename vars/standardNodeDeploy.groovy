@@ -2,10 +2,10 @@
 
 def call(config) {
     def versionTag = ''
-    def dockerImage
+    def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
     def targetNamespace
 
-    nodejsNode {
+    ciNode {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         targetNamespace = envInfo.deployStage
@@ -14,7 +14,6 @@ def call(config) {
 
         stage('Build distribution') {
             versionTag = getNewVersion{}
-            dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
 
             container(name: "nodejs") {
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
@@ -26,29 +25,17 @@ def call(config) {
             }
         }
 
-        stage('Build docker image') {
-            container('docker') {
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    sh "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
-                }
-            }
+        stage('Build container image') {
+            kanikoBuild(env.WORKSPACE, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
-            stage('Container scan') {
-                container('clairscanner') {
-                    sh '/usr/local/bin/clair -w /config/whitelist.yaml -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
-                }
-            }
+            grypeScan("container.tar", env.WORKSPACE)
         }
 
-        stage('Push docker image') {
-            container('docker') {
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    docker.image(dockerImage).push()
-                    docker.image(dockerImage).push(envInfo.branch)
-                }
-            }
+        stage('Push container image') {
+            cranePush("${containerImageTagless}:${versionTag}", "container.tar")
+            cranePush("${containerImageTagless}:${envInfo.branch}", "container.tar")
         }
     }
 

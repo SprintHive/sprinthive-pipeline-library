@@ -4,17 +4,25 @@ def call(config) {
     def versionTag
     def shortCommitSha
     def appVersion
-    def dockerImage
+    def containerImage
+    def contextDirectory
     def targetNamespace
+    def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
 
-    javaNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         shortCommitSha = getNewVersion{}
         targetNamespace = envInfo.deployStage
+        if (config.subModuleName != null) {
+            contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
+        } else {
+            contextDirectory = env.WORKSPACE
+        }
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
         echo "Build commit sha is: ${shortCommitSha}"
+        echo "Context directory is: ${contextDirectory}"
 
         stage('Compile source') {
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
@@ -63,39 +71,20 @@ def call(config) {
             }
         }
 
-        stage('Build docker image') {
-            container('docker') {
-                versionTag = "${appVersion}-${shortCommitSha}"
-                dockerImage = "${config.dockerTagBase}/${config.componentName}:${versionTag}"
-
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    def dockerBuildCommand = "docker build -t ${dockerImage} --build-arg SOURCE_VERSION=${scmInfo.GIT_COMMIT} ."
-                    if (config.subModuleName != null) {
-                        dir("${env.WORKSPACE}/${config.subModuleName}") {
-                            sh dockerBuildCommand
-                        }
-                    } else {
-                        sh dockerBuildCommand
-                    }
-                }
-            }
+        stage('Build container image') {
+            versionTag = "${appVersion}-${shortCommitSha}"
+            kanikoBuild(contextDirectory, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
             stage('Container scan') {
-                container('clairscanner') {
-                    sh '/usr/local/bin/clair -w /config/whitelist.yaml -c http://clair.infra:6060 --ip $POD_IP ' + dockerImage
-                }
+                grypeScan("container.tar", contextDirectory)
             }
         }
 
-        stage('Push docker image') {
-            container('docker') {
-                docker.withRegistry(config.registryUrl, config.registryCredentialsId) {
-                    docker.image(dockerImage).push()
-                    docker.image(dockerImage).push(envInfo.branch)
-                }
-            }
+        stage('Push container image') {
+            cranePush("${containerImageTagless}:${versionTag}", "container.tar")
+            cranePush("${containerImageTagless}:${envInfo.branch}", "container.tar")
         }
     }
 
