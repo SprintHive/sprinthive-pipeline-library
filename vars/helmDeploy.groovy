@@ -5,6 +5,9 @@ def call(config) {
     for (String override : config.overrides) {
         overrides += " --set " + override
     }
+    if (config.imageTag) {
+        overrides += " --set global.image.tag=${config.imageTag}"
+    }
 
     def helmfileRepo
     if (config.helmfileRepoOverride != null) {
@@ -26,15 +29,10 @@ def call(config) {
     ])
 
     container('helm') {
-        File pipelineValuesFile = File.createTempFile("pipeline-values",".tmp")
-        sh script:"touch ${pipelineValuesFile.absolutePath}"
-        if (config.imageTag) {
-            sh script:"echo 'global:\n  image:\n    tag: \"${config.imageTag}\"\n' > ${pipelineValuesFile.absolutePath}"
-        }
-        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${releaseName} --namespace ${config.namespace} sync --wait --values ${pipelineValuesFile.absolutePath} ${overrides}", returnStatus:true
+        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${releaseName} --namespace ${config.namespace} sync --wait ${overrides} --args \"--tiller-namespace ${config.namespace}\"", returnStatus:true
 
         if (statusCode != 0) {
-            sh "helm rollback ${releaseName} -n ${config.namespace} ```helm history ${releaseName} -n ${config.namespace} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
+            sh "helm --tiller-namespace ${config.namespace} rollback ${releaseName} ```helm --tiller-namespace ${config.namespace} history ${releaseName} | grep DEPLOYED | awk '{print \$1}' | tail -n 1```"
             error "The deployment failed and was rolled back"
         }
     }

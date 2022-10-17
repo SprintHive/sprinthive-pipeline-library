@@ -2,7 +2,7 @@
 def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('cd'))
 
-    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
+    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.138.7')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def inheritFrom = parameters.get('inheritFrom', 'base')
 
