@@ -8,7 +8,7 @@ def call(Map parameters = [:], body) {
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
     def nodejsImage = parameters.get('nodejsImage', 'node:16-alpine')
-    def inheritFrom = parameters.get('inheritFrom', 'base')
+    def inheritFrom = parameters.get('inheritFrom', 'default')
 
     echo "Starting CI node"
 
@@ -16,7 +16,6 @@ def call(Map parameters = [:], body) {
     apiVersion: v1
     kind: Pod
     spec:
-      serviceAccount: jenkins-worker
       containers:
       - name: kaniko
         image: ${kanikoImage}

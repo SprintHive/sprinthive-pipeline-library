@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
 
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
-    def inheritFrom = parameters.get('inheritFrom', 'base')
+    def inheritFrom = parameters.get('inheritFrom', 'default')
 
     echo "Starting CD node"
 
@@ -12,7 +12,6 @@ def call(Map parameters = [:], body) {
       apiVersion: v1
       kind: Pod
       spec:
-        serviceAccount: jenkins-worker
         containers:
         - name: crane
           image: ${craneImage}
