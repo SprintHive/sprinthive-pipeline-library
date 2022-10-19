@@ -118,6 +118,10 @@ def call(config) {
           }
         }
       }
+
+      if (config.publishDeployMetric == true) {
+        publishDeployMetric(config.application, config.namespacesProd + config.namespacesPreProd)
+      }
     }
   }
 }
