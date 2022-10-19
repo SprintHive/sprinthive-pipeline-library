@@ -32,5 +32,9 @@ def call(config) {
               helmfileRepoOverride : config.helmfileRepoOverride
       ])
     }
+
+    if (config.publishDeployMetric == true) {
+      publishDeployMetric(config.application, [config.namespace])
+    }
   }
 }
