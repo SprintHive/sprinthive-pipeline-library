@@ -47,7 +47,7 @@ def call(config) {
                   userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
           ])
           podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
-          podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
+          podLabel = "${UUID.randomUUID().toString()}"
           podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
             node(podLabel) {
               checkout([
