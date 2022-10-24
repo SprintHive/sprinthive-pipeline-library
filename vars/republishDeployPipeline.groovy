@@ -42,7 +42,7 @@ def call(config) {
 
   if (config.integrationTest != null && config.integrationTest.enabled) {
     stage("Integration test") {
-      cdNode {
+      node {
         checkout([
             $class: 'GitSCM',
             branches: [[name: config.integrationTest.branch]],
@@ -50,7 +50,7 @@ def call(config) {
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
         ])
         podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
-        podLabel = "integ-test-${config.application}"
+        podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
         podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
           node(podLabel) {
             checkout([
