@@ -39,6 +39,7 @@ def call(Map parameters = [:], body) {
             memory: 128Mi
       - name: grype-scanner
         image: ${grypeScannerImage}
+        imagePullPolicy: Always
         command:
         - /busybox/busybox
         args:
