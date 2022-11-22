@@ -40,7 +40,7 @@ def call(Map parameters = [:], body) {
       - name: grype-scanner
         image: ${grypeScannerImage}
         command:
-        - busybox
+        - /busybox/busybox
         args:
         - cat
         tty: true
