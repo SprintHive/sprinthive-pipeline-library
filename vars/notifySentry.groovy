@@ -9,13 +9,10 @@ def call(config) {
         sh """
                 export SENTRY_AUTH_TOKEN=${credentials('sentry-auth-token')}
                 export SENTRY_ORG="${sentryOrg}"
-                export SENTRY_PROJECT="${sentryProject}"
-                export SENTRY_ENVIRONMENT="${sentryEnvironment}"
-                export SENTRY_RELEASE="${releaseName}"
-                sentry-cli releases new -p $SENTRY_PROJECT $SENTRY_RELEASE
-                sentry-cli releases set-commits $SENTRY_RELEASE --auto
-                sentry-cli releases finalize $SENTRY_RELEASE
-                sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_ENVIRONMENT
+                sentry-cli releases new -p ${sentryProject} ${releaseName}
+                sentry-cli releases set-commits ${releaseName} --auto
+                sentry-cli releases finalize ${releaseName}
+                sentry-cli releases deploys ${releaseName} new -e ${sentryEnvironment}
            """
     }
 }
