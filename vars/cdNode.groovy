@@ -4,6 +4,7 @@ def call(Map parameters = [:], body) {
 
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
+    def sentryImage = parameters.get('sentryImage', 'getsentry/sentry-cli:2.13.0')
     def inheritFrom = parameters.get('inheritFrom', 'default')
 
     echo "Starting CD node"
@@ -34,6 +35,11 @@ def call(Map parameters = [:], body) {
           resources:
             requests:
               memory: 128Mi
+        - name: sentry
+          image: ${sentryImage}
+          command:
+          - cat
+          tty: true
       """
     ) {
         node(label) {

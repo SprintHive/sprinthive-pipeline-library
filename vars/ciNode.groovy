@@ -8,7 +8,6 @@ def call(Map parameters = [:], body) {
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
     def nodejsImage = parameters.get('nodejsImage', 'node:16-alpine')
-    def sentryImage = parameters.get('sentryImage', 'getsentry/sentry-cli:2.13.0')
     def inheritFrom = parameters.get('inheritFrom', 'default')
 
     echo "Starting CI node"
@@ -72,11 +71,6 @@ def call(Map parameters = [:], body) {
             memory: 2Gi
       - name: nodejs
         image: ${nodejsImage}
-        command:
-        - cat
-        tty: true
-      - name: sentry
-        image: ${sentryImage}
         command:
         - cat
         tty: true
