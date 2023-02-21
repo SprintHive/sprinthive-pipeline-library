@@ -36,5 +36,10 @@ def call(config) {
     if (config.publishDeployMetric == true) {
       publishDeployMetric(config.application, [config.namespace])
     }
+    if (config.publishSentryRelease == true) {
+      stage('Notify Sentry') {
+        notifySentry()
+      }
+    }
   }
 }
