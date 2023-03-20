@@ -31,7 +31,7 @@ def call(config) {
         if (config.imageTag) {
             sh script:"echo 'global:\n  image:\n    tag: \"${config.imageTag}\"\n' > ${pipelineValuesFile.absolutePath}"
         }
-        def statusCode = sh script:"helmfile --timeout 4s -f ${chartEnv}/helmfile.yaml --selector name=${releaseName}" +
+        def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --timeout 4 --selector name=${releaseName}" +
                 " --namespace " +
                 "${config.namespace} sync --wait --values ${pipelineValuesFile.absolutePath} ${overrides}" ,
                 returnStatus:true
