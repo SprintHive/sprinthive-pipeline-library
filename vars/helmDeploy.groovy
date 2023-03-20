@@ -31,10 +31,11 @@ def call(config) {
         if (config.imageTag) {
             sh script:"echo 'global:\n  image:\n    tag: \"${config.imageTag}\"\n' > ${pipelineValuesFile.absolutePath}"
         }
+        sh script:"echo 'helmDefaults:\n  timeout: 6\"\n' > ${pipelineValuesFile.absolutePath}"
+
         def statusCode = sh script:"helmfile -f ${chartEnv}/helmfile.yaml --selector name=${releaseName}" +
                 " --namespace " +
-                "${config.namespace} sync --wait --values ${pipelineValuesFile.absolutePath} ${overrides} --set " +
-                "timeout=6" ,
+                "${config.namespace} sync --wait --values ${pipelineValuesFile.absolutePath} ${overrides}" ,
                 returnStatus:true
 
         if (statusCode != 0) {
