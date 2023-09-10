@@ -51,7 +51,7 @@ def call(config) {
         ])
         podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
         podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
-        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
+        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "lab-0") {
           node(podLabel) {
             checkout([
                     $class: 'GitSCM',
