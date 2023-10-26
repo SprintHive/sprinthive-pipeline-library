@@ -3,7 +3,7 @@ def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('ciNode'))
 
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
-    def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:v0.52.0-debug')
+    def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:debug')
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
