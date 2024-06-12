@@ -46,58 +46,45 @@ def call(config) {
 
     cdNode {
         stage("Deploy Cloud Function: ${functionName}") {
-            // We use ADC by default to run gcloud
-            container('gcloud') {
-                try {
-                    echo "Starting deployment of Cloud Function ${functionName}..."
+            withCredentials([[$class: 'GoogleRobotPrivateKeyCredentials', credentialsId: 'jenkins-gcloud-oauth-credentials', scopes: ['https://www.googleapis.com/auth/cloud-platform']]]) {
+                sh """
+                    gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                    gcloud config set project ${projectId}
 
-                    sh """
-                        gcloud config set project ${projectId}
+                    gcloud functions deploy ${functionName} \
+                        --runtime ${runtime} \
+                        --region ${region} \
+                        --source ${zipFilePath} \
+                        ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
+                        --service-account ${serviceAccountEmail} \
+                        --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
+                        ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
+                        ${timeout ? "--timeout ${timeout}" : ''} \
+                        ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
+                        ${allowUnauthenticated ? '--allow-unauthenticated' : ''} \
+                """
 
-                        gcloud functions deploy ${functionName} \
-                            --runtime ${runtime} \
-                            --region ${region} \
-                            --source ${zipFilePath} \
-                            ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
-                            --service-account ${serviceAccountEmail} \
-                            --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                            ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
-                            ${timeout ? "--timeout ${timeout}" : ''} \
-                            ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
-                            ${allowUnauthenticated ? '--allow-unauthenticated' : ''} \
-                    """
-
-                    echo "Cloud Function ${functionName} deployed successfully."
-                } catch (err) {
-                    error "Deployment of Cloud Function ${functionName} failed: ${err}"
-                }
+                echo "Cloud Function ${functionName} deployed successfully."
             }
         }
 
         if (triggerType == 'http') {
             stage("Verify Cloud Function: ${functionName}") {
-                container('gcloud') {
-                    try {
-                        echo "Verifying Cloud Function ${functionName}..."
+                withCredentials([[$class: 'GoogleRobotPrivateKeyCredentials', credentialsId: 'jenkins-gcloud-oauth-credentials', scopes: ['https://www.googleapis.com/auth/cloud-platform']]]) {
+                    sh """
+                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                        gcloud config set project ${projectId}
 
-                        def functionUrl = sh(
-                            script: "gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)'",
-                            returnStdout: true
-                        ).trim()
+                        functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
+                        response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
 
-                        def response = sh(
-                            script: "curl -s -o /dev/null -w '%{http_code}' ${functionUrl}",
-                            returnStdout: true
-                        ).trim()
-
-                        if (response == '200') {
+                        if [ "\$response" == "200" ]; then
                             echo "Cloud Function ${functionName} is verified and responding successfully."
-                        } else {
-                            error "Cloud Function ${functionName} verification failed. HTTP response code: ${response}"
-                        }
-                    } catch (err) {
-                        error "Verification of Cloud Function ${functionName} failed: ${err}"
-                    }
+                        else
+                            echo "Cloud Function ${functionName} verification failed. HTTP response code: \$response"
+                            exit 1
+                        fi
+                    """
                 }
             }
         }
