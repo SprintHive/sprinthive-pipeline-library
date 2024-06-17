@@ -1,6 +1,7 @@
 #!/usr/bin/groovy
 
 // This script currently supports deploying Google Cloud Functions with HTTP and Pub/Sub triggers.
+// TODO: figure out exact workload identity
 
 /**
  * Deploys a Google Cloud Function.
@@ -44,47 +45,70 @@ def call(config) {
         error "Missing required parameter 'topicName' for Pub/Sub triggered function."
     }
 
-    cdNode {
-        stage("Deploy Cloud Function: ${functionName}") {
-            withCredentials([[$class: 'GoogleRobotPrivateKeyCredentials', credentialsId: 'jenkins-gcloud-oauth-credentials', scopes: ['https://www.googleapis.com/auth/cloud-platform']]]) {
-                sh """
-                    gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
-                    gcloud config set project ${projectId}
-
-                    gcloud functions deploy ${functionName} \
-                        --runtime ${runtime} \
-                        --region ${region} \
-                        --source ${zipFilePath} \
-                        ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
-                        --service-account ${serviceAccountEmail} \
-                        --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                        ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
-                        ${timeout ? "--timeout ${timeout}" : ''} \
-                        ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
-                        ${allowUnauthenticated ? '--allow-unauthenticated' : ''} \
-                """
-
-                echo "Cloud Function ${functionName} deployed successfully."
-            }
-        }
-
-        if (triggerType == 'http') {
-            stage("Verify Cloud Function: ${functionName}") {
-                withCredentials([[$class: 'GoogleRobotPrivateKeyCredentials', credentialsId: 'jenkins-gcloud-oauth-credentials', scopes: ['https://www.googleapis.com/auth/cloud-platform']]]) {
+    def label = "gcloud-${UUID.randomUUID().toString()}"
+    podTemplate(
+        label: label,
+        serviceAccount: 'jenkins-gcloud-workload-identity',
+        containers: [
+            containerTemplate(
+                name: 'gcloud',
+                image: 'google/cloud-sdk',
+                command: 'cat',
+                ttyEnabled: true
+            )
+        ]
+    ) {
+        node(label) {
+            stage("Deploy Cloud Function: ${functionName}") {
+                container('gcloud') {
                     sh """
-                        gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${projectId}
 
-                        functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
-                        response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
+                        gcloud functions deploy ${functionName} \
+                            --runtime ${runtime} \
+                            --region ${region} \
+                            --source ${zipFilePath} \
+                            ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
+                            --service-account ${serviceAccountEmail} \
+                            --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
+                            ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
+                            ${timeout ? "--timeout ${timeout}" : ''} \
+                            ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
+                            ${allowUnauthenticated ? '--allow-unauthenticated' : ''} \
+                    """
 
-                        if [ "\$response" == "200" ]; then
-                            echo "Cloud Function ${functionName} is verified and responding successfully."
+                    echo "Cloud Function ${functionName} deployed successfully."
+                }
+            }
+
+            stage("Verify Cloud Function: ${functionName}") {
+                container('gcloud') {
+                    sh """
+                        gcloud config set project ${projectId}
+
+                        functionStatus=\$(gcloud functions describe ${functionName} --region ${region} --format='value(status)')
+
+                        if [ "\$functionStatus" == "ACTIVE" ]; then
+                            echo "Cloud Function ${functionName} is verified and in ACTIVE state."
                         else
-                            echo "Cloud Function ${functionName} verification failed. HTTP response code: \$response"
+                            echo "Cloud Function ${functionName} verification failed. Status: \$functionStatus"
                             exit 1
                         fi
                     """
+
+                    if (triggerType == 'http') {
+                        sh """
+                            functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
+                            response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
+
+                            if [ "\$response" == "200" ]; then
+                                echo "HTTP-triggered Cloud Function ${functionName} is responding successfully."
+                            else
+                                echo "HTTP-triggered Cloud Function ${functionName} verification failed. HTTP response code: \$response"
+                                exit 1
+                            fi
+                        """
+                    }
                 }
             }
         }
