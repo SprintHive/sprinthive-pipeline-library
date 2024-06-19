@@ -45,81 +45,67 @@ def call(config) {
         error "Missing required parameter 'topicName' for Pub/Sub triggered function."
     }
 
-    def label = "gcloud-${UUID.randomUUID().toString()}"
-    podTemplate(
-        label: label,
-        serviceAccount: 'jenkins-worker',
-        containers: [
-            containerTemplate(
-                name: 'gcloud',
-                image: 'google/cloud-sdk',
-                command: 'cat',
-                ttyEnabled: true
-            )
-        ]
-    ) {
-        node(label) {
-            try {
-                stage("Deploy Cloud Function: ${functionName}") {
-                    container('gcloud') {
-                        withCredentials([
-                            googleServiceAccountKey(credentialsId: 'JENKINS_WORKER_GCP_SA_KEY')
-                        ]) {
-                            sh """
-                                gcloud config set project ${projectId}
-
-                                gcloud functions deploy ${functionName} \
-                                    --runtime ${runtime} \
-                                    --region ${region} \
-                                    --source ${zipFilePath} \
-                                    ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
-                                    --service-account ${serviceAccountEmail} \
-                                    --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                                    ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
-                                    ${timeout ? "--timeout ${timeout}" : ''} \
-                                    ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
-                                    ${allowUnauthenticated ? '--allow-unauthenticated' : ''}
-                            """
-
-                            echo "Cloud Function ${functionName} deployed successfully."
-                        }
-                    }
-                }
-
-                stage("Verify Cloud Function: ${functionName}") {
-                    container('gcloud') {
+    ciNode {
+        try {
+            stage("Deploy Cloud Function: ${functionName}") {
+                container('gcloud') {
+                    withCredentials([
+                        googleServiceAccountKey(credentialsId: 'JENKINS_WORKER_GCP_SA_KEY')
+                    ]) {
                         sh """
                             gcloud config set project ${projectId}
 
-                            functionStatus=\$(gcloud functions describe ${functionName} --region ${region} --format='value(status)')
+                            gcloud functions deploy ${functionName} \
+                                --runtime ${runtime} \
+                                --region ${region} \
+                                --source ${zipFilePath} \
+                                ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
+                                --service-account ${serviceAccountEmail} \
+                                --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
+                                ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
+                                ${timeout ? "--timeout ${timeout}" : ''} \
+                                ${maxInstances ? "--max-instances ${maxInstances}" : ''} \
+                                ${allowUnauthenticated ? '--allow-unauthenticated' : ''}
+                        """
 
-                            if [ "\$functionStatus" == "ACTIVE" ]; then
-                                echo "Cloud Function ${functionName} is verified and in ACTIVE state."
+                        echo "Cloud Function ${functionName} deployed successfully."
+                    }
+                }
+            }
+
+            stage("Verify Cloud Function: ${functionName}") {
+                container('gcloud') {
+                    sh """
+                        gcloud config set project ${projectId}
+
+                        functionStatus=\$(gcloud functions describe ${functionName} --region ${region} --format='value(status)')
+
+                        if [ "\$functionStatus" == "ACTIVE" ]; then
+                            echo "Cloud Function ${functionName} is verified and in ACTIVE state."
+                        else
+                            echo "Cloud Function ${functionName} verification failed. Status: \$functionStatus"
+                            exit 1
+                        fi
+                    """
+
+                    if (triggerType == 'http') {
+                        sh """
+                            functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
+                            response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
+
+                            if [ "\$response" == "200" ]; then
+                                echo "HTTP-triggered Cloud Function ${functionName} is responding successfully."
                             else
-                                echo "Cloud Function ${functionName} verification failed. Status: \$functionStatus"
+                                echo "HTTP-triggered Cloud Function ${functionName} verification failed. HTTP response code: \$response"
                                 exit 1
                             fi
                         """
-
-                        if (triggerType == 'http') {
-                            sh """
-                                functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
-                                response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
-
-                                if [ "\$response" == "200" ]; then
-                                    echo "HTTP-triggered Cloud Function ${functionName} is responding successfully."
-                                else
-                                    echo "HTTP-triggered Cloud Function ${functionName} verification failed. HTTP response code: \$response"
-                                    exit 1
-                                fi
-                            """
-                        }
                     }
                 }
-            } catch (err) {
-                echo "Error deploying Cloud Function: ${err.getMessage()}"
-                currentBuild.result = 'FAILURE'
             }
+        } catch (err) {
+            echo "Error deploying Cloud Function: ${err.getMessage()}"
+            currentBuild.result = 'FAILURE'
         }
     }
 }
