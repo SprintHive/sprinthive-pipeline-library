@@ -1,9 +1,31 @@
+#!/usr/bin/groovy
+
+// This script currently supports deploying Google Cloud Functions with HTTP and Pub/Sub triggers.
+// TODO: figure out exact workload identity
+
+/**
+ * Deploys a Google Cloud Function.
+ *
+ * @param config The configuration for deploying the Cloud Function.
+ * @param config.functionName The name of the Cloud Function.
+ * @param config.projectId The ID of the Google Cloud project where the function will be deployed.
+ * @param config.serviceAccountEmail The email of the service account that will be used to run the function.
+ * @param config.zipFilePath The path to the ZIP file containing the function's source code and dependencies.
+ * @param config.region The region where the function will be deployed.
+ * @param config.environmentVariables (Optional) A map of environment variables to be set for the function.
+ * @param config.runtime The runtime environment for the function (e.g., 'python37', 'nodejs10').
+ * @param config.entryPoint (Optional) The name of the function to be executed within the source code.
+ * @param config.timeout (Optional) The timeout duration for the function execution.
+ * @param config.maxInstances (Optional) The maximum number of instances for the function.
+ * @param config.allowUnauthenticated (Optional) Whether to allow unauthenticated access to the function. Default is false.
+ * @param config.triggerType The type of trigger for the function ('http' or 'pubsub').
+ * @param config.topicName (Optional if not Pub/Sub triggered) The name of the Pub/Sub topic for Pub/Sub triggered functions.
+ */
 def call(config) {
     def functionName = config.functionName
     def projectId = config.projectId
     def serviceAccountEmail = config.serviceAccountEmail
-    def sourceCodeBucket = config.sourceCodeBucket
-    def sourceCodeObject = config.sourceCodeObject
+    def zipFilePath = config.zipFilePath
     def region = config.region
     def environmentVariables = config.environmentVariables
     def runtime = config.runtime
@@ -26,7 +48,7 @@ def call(config) {
                         gcloud functions deploy ${functionName} \
                             --runtime ${runtime} \
                             --region ${region} \
-                            --source gs://${sourceCodeBucket}/${sourceCodeObject} \
+                            --source ${zipFilePath} \
                             ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
                             --service-account ${serviceAccountEmail} \
                             --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
