@@ -65,6 +65,12 @@ def call(Map config) {
                 }
             }
 
+            stage('List Workspace') {
+                steps {
+                    sh 'ls -la'
+                }
+            }
+
             stage('Verify ZIP File') {
                 if (!fileExists(config.zipFilePath)) {
                     error("ZIP file not found: ${config.zipFilePath}")
