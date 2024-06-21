@@ -1,79 +1,117 @@
 #!/usr/bin/groovy
 
-// This script currently supports deploying Google Cloud Functions with HTTP and Pub/Sub triggers.
-// Make sure any resources depended on by the function are created before running this stage.
+def call(Map config) {
+    // Common required parameters for all trigger types
+    def commonRequiredParams = [
+        'functionName',
+        'projectId',
+        'serviceAccountEmail',
+        'zipFilePath',
+        'region',
+        'environmentVariables',
+        'runtime',
+        'triggerType'
+    ]
 
-/**
- * Deploys a Google Cloud Function.
- *
- * @param config The configuration for deploying the Cloud Function.
- * @param config.functionName The name of the Cloud Function.
- * @param config.projectId The ID of the Google Cloud project where the function will be deployed.
- * @param config.serviceAccountEmail The email of the service account that will be used to run the function.
- * @param config.zipFilePath The path to the ZIP file containing the function's source code and dependencies.
- * @param config.region The region where the function will be deployed.
- * @param config.environmentVariables (Optional) A map of environment variables to be set for the function.
- * @param config.runtime The runtime environment for the function (e.g., 'python37', 'nodejs10').
- * @param config.entryPoint (Optional) The name of the function to be executed within the source code.
- * @param config.timeout (Optional) The timeout duration for the function execution.
- * @param config.maxInstances (Optional) The maximum number of instances for the function.
- * @param config.allowUnauthenticated (Optional) Whether to allow unauthenticated access to the function. Default is false.
- * @param config.triggerType The type of trigger for the function ('http' or 'pubsub').
- * @param config.topicName (Optional if not Pub/Sub triggered) The name of the Pub/Sub topic for Pub/Sub triggered functions.
- */
-def call(config) {
-    def functionName = config.functionName
-    def projectId = config.projectId
-    def serviceAccountEmail = config.serviceAccountEmail
-    def zipFilePath = config.zipFilePath
-    def region = config.region
-    def environmentVariables = config.environmentVariables
-    def runtime = config.runtime
-    def entryPoint = config.entryPoint
-    def timeout = config.timeout
-    def maxInstances = config.maxInstances
-    def triggerType = config.triggerType
-    def topicName = config.topicName
-    def schedule = config.schedule
-    def timeZone = config.timeZone
-    def pubsubTargetData = config.pubsubTargetData
+    // Verify common required parameters
+    commonRequiredParams.each { param ->
+        if (!config.containsKey(param) || config[param] == null || config[param].toString().trim().isEmpty()) {
+            error("Required parameter '${param}' is missing or empty")
+        }
+    }
 
-    ciNode {
-        try {
-            stage("Deploy Cloud Function: ${functionName}") {
+    // Verify trigger-specific parameters
+    switch(config.triggerType) {
+        case 'http':
+            // No additional required parameters for HTTP trigger
+            break
+        case 'pubsub':
+            def pubsubParams = ['topicName', 'schedule', 'timeZone', 'pubsubTargetData']
+            pubsubParams.each { param ->
+                if (!config.containsKey(param) || config[param] == null || config[param].toString().trim().isEmpty()) {
+                    error("Required Pub/Sub parameter '${param}' is missing or empty")
+                }
+            }
+            break
+        default:
+            error("Invalid triggerType: ${config.triggerType}. Supported types are 'http' and 'pubsub'")
+    }
+
+    def podLabel = "gcloud-${UUID.randomUUID().toString()}"
+    
+    // TODO: alter mountPath to be correct
+    podTemplate(label: podLabel, yaml: '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: gcloud
+            image: google/cloud-sdk:latest
+            command:
+            - cat
+            tty: true
+            volumeMounts:
+            - name: gcloud-config
+              mountPath: /root/.config/gcloud
+          volumes:
+          - name: gcloud-config
+            emptyDir: {}
+    ''') {
+        node(podLabel) {
+            stage('Verify GCloud Auth') {
                 container('gcloud') {
-                    sh """
-                        gcloud config set project ${projectId}
-
-                        gcloud functions deploy ${functionName} \
-                            --runtime ${runtime} \
-                            --region ${region} \
-                            --source ${zipFilePath} \
-                            ${triggerType == 'http' ? '--trigger-http' : "--trigger-topic ${topicName}"} \
-                            --service-account ${serviceAccountEmail} \
-                            --set-env-vars ${environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                            ${entryPoint ? "--entry-point ${entryPoint}" : ''} \
-                            ${timeout ? "--timeout ${timeout}" : ''} \
-                            ${maxInstances ? "--max-instances ${maxInstances}" : ''}
-                    """
-
-                    echo "Cloud Function ${functionName} deployed successfully."
+                    sh 'gcloud auth list'
+                    sh 'gcloud config list project'
                 }
             }
 
-            if (triggerType == 'pubsub') {
+            stage('Verify ZIP File') {
+                if (!fileExists(config.zipFilePath)) {
+                    error("ZIP file not found: ${config.zipFilePath}")
+                }
+            }
+
+            stage("Deploy Cloud Function: ${config.functionName}") {
+                container('gcloud') {
+                    def deployCommand = """
+                        set -x
+                        gcloud config set project ${config.projectId}
+
+                        gcloud functions deploy ${config.functionName} \
+                            --runtime ${config.runtime} \
+                            --region ${config.region} \
+                            --source ${config.zipFilePath} \
+                            --service-account ${config.serviceAccountEmail} \
+                            --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
+                            ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
+                            ${config.timeout ? "--timeout ${config.timeout}" : ''} \
+                            ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \
+                            --verbosity debug
+                    """
+
+                    if (config.triggerType == 'http') {
+                        deployCommand += " --trigger-http"
+                    } else if (config.triggerType == 'pubsub') {
+                        deployCommand += " --trigger-topic ${config.topicName}"
+                    }
+
+                    sh deployCommand
+
+                    echo "Cloud Function ${config.functionName} deployed successfully."
+                }
+            }
+
+            if (config.triggerType == 'pubsub') {
                 stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
                     container('gcloud') {
                         sh """
-                            gcloud config set project ${projectId}
+                            gcloud pubsub topics create ${config.topicName} || true
 
-                            gcloud pubsub topics create ${topicName}
-
-                            gcloud scheduler jobs create pubsub ${functionName}-scheduler \
-                                --schedule '${schedule}' \
-                                --topic ${topicName} \
-                                --message-body '${pubsubTargetData}' \
-                                --time-zone '${timeZone}'
+                            gcloud scheduler jobs create pubsub ${config.functionName}-scheduler \
+                                --schedule '${config.schedule}' \
+                                --topic ${config.topicName} \
+                                --message-body '${config.pubsubTargetData}' \
+                                --time-zone '${config.timeZone}' || true
                         """
 
                         echo "Pub/Sub topic and Cloud Scheduler job created successfully."
@@ -81,39 +119,34 @@ def call(config) {
                 }
             }
 
-            stage("Verify Cloud Function: ${functionName}") {
+            stage("Verify Cloud Function: ${config.functionName}") {
                 container('gcloud') {
                     sh """
-                        gcloud config set project ${projectId}
-
-                        functionStatus=\$(gcloud functions describe ${functionName} --region ${region} --format='value(status)')
+                        functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
 
                         if [ "\$functionStatus" == "ACTIVE" ]; then
-                            echo "Cloud Function ${functionName} is verified and in ACTIVE state."
+                            echo "Cloud Function ${config.functionName} is verified and in ACTIVE state."
                         else
-                            echo "Cloud Function ${functionName} verification failed. Status: \$functionStatus"
+                            echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
                             exit 1
                         fi
                     """
 
-                    if (triggerType == 'http') {
+                    if (config.triggerType == 'http') {
                         sh """
-                            functionUrl=\$(gcloud functions describe ${functionName} --region ${region} --format='value(httpsTrigger.url)')
+                            functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
                             response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
 
                             if [ "\$response" == "200" ]; then
-                                echo "HTTP-triggered Cloud Function ${functionName} is responding successfully."
+                                echo "HTTP-triggered Cloud Function ${config.functionName} is responding successfully."
                             else
-                                echo "HTTP-triggered Cloud Function ${functionName} verification failed. HTTP response code: \$response"
+                                echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
                                 exit 1
                             fi
                         """
                     }
                 }
             }
-        } catch (err) {
-            echo "Error deploying Cloud Function: ${err.getMessage()}"
-            currentBuild.result = 'FAILURE'
         }
     }
 }
