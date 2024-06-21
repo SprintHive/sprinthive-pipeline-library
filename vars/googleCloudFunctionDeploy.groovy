@@ -67,7 +67,12 @@ def call(Map config) {
 
             stage('Copy ZIP File') {
                 container('gcloud') {
-                    sh "cp ${config.zipFilePath} /home/jenkins/agent/"
+                    // Download the archived ZIP file
+                    step([$class: 'CopyArtifact',
+                          projectName: env.JOB_NAME,
+                          filter: config.zipFilePath,
+                          target: '/home/jenkins/agent/'])
+                    
                     sh 'ls -la /home/jenkins/agent/'
                 }
             }
