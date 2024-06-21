@@ -74,14 +74,18 @@ def call(Map config) {
                           target: '/home/jenkins/agent/'])
                     
                     sh 'ls -la /home/jenkins/agent/'
+                    sh "find /home/jenkins/agent -name ${config.zipFilePath}"
+                    
+                    // Ensure the ZIP file is in the expected location
+                    sh "cp /home/jenkins/agent/${config.zipFilePath} /home/jenkins/agent/ || true"
                 }
             }
 
             stage('Verify ZIP File') {
                 container('gcloud') {
-                    def zipFileName = config.zipFilePath.split('/')[-1]
-                    if (!fileExists("/home/jenkins/agent/${zipFileName}")) {
-                        error("ZIP file not found: /home/jenkins/agent/${zipFileName}")
+                    sh "ls -la /home/jenkins/agent/"
+                    if (!fileExists("/home/jenkins/agent/${config.zipFilePath}")) {
+                        error("ZIP file not found: /home/jenkins/agent/${config.zipFilePath}")
                     }
                 }
             }
