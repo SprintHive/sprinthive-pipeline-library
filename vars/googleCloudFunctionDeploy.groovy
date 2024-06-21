@@ -51,8 +51,8 @@ def call(Map config) {
             - cat
             tty: true
             volumeMounts:
-            - name: gcloud-config
-              mountPath: /root/.config/gcloud
+            - name: workspace-volume
+              mountPath: /home/jenkins/agent
           volumes:
           - name: gcloud-config
             emptyDir: {}
@@ -65,15 +65,18 @@ def call(Map config) {
                 }
             }
 
-            stage('List Workspace') {
-                steps {
-                    sh 'ls -la'
+            stage('Copy ZIP File') {
+                container('gcloud') {
+                    sh "cp ${env.WORKSPACE}/${config.zipFilePath} /home/jenkins/agent/"
+                    sh 'ls -la /home/jenkins/agent/'
                 }
             }
 
             stage('Verify ZIP File') {
-                if (!fileExists(config.zipFilePath)) {
-                    error("ZIP file not found: ${config.zipFilePath}")
+                container('gcloud') {
+                    if (!fileExists("/home/jenkins/agent/${config.zipFilePath}")) {
+                        error("ZIP file not found: /home/jenkins/agent/${config.zipFilePath}")
+                    }
                 }
             }
 
@@ -86,7 +89,7 @@ def call(Map config) {
                         gcloud functions deploy ${config.functionName} \
                             --runtime ${config.runtime} \
                             --region ${config.region} \
-                            --source ${config.zipFilePath} \
+                            --source /home/jenkins/agent/${config.zipFilePath} \
                             --service-account ${config.serviceAccountEmail} \
                             --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
