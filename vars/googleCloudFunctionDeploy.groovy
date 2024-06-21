@@ -54,7 +54,7 @@ def call(Map config) {
             - name: workspace-volume
               mountPath: /home/jenkins/agent
           volumes:
-          - name: gcloud-config
+          - name: workspace-volume
             emptyDir: {}
     ''') {
         node(podLabel) {
@@ -67,21 +67,23 @@ def call(Map config) {
 
             stage('Copy ZIP File') {
                 container('gcloud') {
-                    sh "cp ${env.WORKSPACE}/${config.zipFilePath} /home/jenkins/agent/"
+                    sh "cp ${config.zipFilePath} /home/jenkins/agent/"
                     sh 'ls -la /home/jenkins/agent/'
                 }
             }
 
             stage('Verify ZIP File') {
                 container('gcloud') {
-                    if (!fileExists("/home/jenkins/agent/${config.zipFilePath}")) {
-                        error("ZIP file not found: /home/jenkins/agent/${config.zipFilePath}")
+                    def zipFileName = config.zipFilePath.split('/')[-1]
+                    if (!fileExists("/home/jenkins/agent/${zipFileName}")) {
+                        error("ZIP file not found: /home/jenkins/agent/${zipFileName}")
                     }
                 }
             }
 
             stage("Deploy Cloud Function: ${config.functionName}") {
                 container('gcloud') {
+                    def zipFileName = config.zipFilePath.split('/')[-1]
                     def deployCommand = """
                         set -x
                         gcloud config set project ${config.projectId}
@@ -89,7 +91,7 @@ def call(Map config) {
                         gcloud functions deploy ${config.functionName} \
                             --runtime ${config.runtime} \
                             --region ${config.region} \
-                            --source /home/jenkins/agent/${config.zipFilePath} \
+                            --source /home/jenkins/agent/${zipFileName} \
                             --service-account ${config.serviceAccountEmail} \
                             --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
