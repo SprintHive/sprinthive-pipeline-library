@@ -1,29 +1,31 @@
 #!/usr/bin/groovy
 
+// To use this function, remember to upload your source to the relevant source bucket in the environment
+// you're deploying to. Here is an example for the Jenkinsfile:
+// stage('Prepare and Upload Function') {
+//     steps {
+//         script {
+//             sh "zip -r ${componentName}.zip . -x '*.git*'"
+//             sh "gsutil cp ${componentName}.zip gs://${sourceBucket}/${componentName}.zip"
+//             echo "Function ZIP uploaded to gs://${sourceBucket}/${componentName}.zip"
+//         }
+//     }
+// }
+
 def call(Map config) {
-    // Common required parameters for all trigger types
     def commonRequiredParams = [
-        'functionName',
-        'projectId',
-        'serviceAccountEmail',
-        'zipFilePath',
-        'region',
-        'environmentVariables',
-        'runtime',
-        'triggerType'
+        'functionName', 'projectId', 'serviceAccountEmail', 'zipFilePath',
+        'region', 'environmentVariables', 'runtime', 'triggerType'
     ]
 
-    // Verify common required parameters
     commonRequiredParams.each { param ->
         if (!config.containsKey(param) || config[param] == null || config[param].toString().trim().isEmpty()) {
             error("Required parameter '${param}' is missing or empty")
         }
     }
 
-    // Verify trigger-specific parameters
     switch(config.triggerType) {
         case 'http':
-            // No additional required parameters for HTTP trigger
             break
         case 'pubsub':
             def pubsubParams = ['topicName', 'schedule', 'timeZone', 'pubsubTargetData']
@@ -39,7 +41,6 @@ def call(Map config) {
 
     def podLabel = "gcloud-${UUID.randomUUID().toString()}"
     
-    // TODO: alter mountPath to be correct
     podTemplate(label: podLabel, yaml: '''
         apiVersion: v1
         kind: Pod
@@ -50,57 +51,18 @@ def call(Map config) {
             command:
             - cat
             tty: true
-            volumeMounts:
-            - name: workspace-volume
-              mountPath: /home/jenkins/agent
           volumes:
           - name: workspace-volume
             emptyDir: {}
     ''') {
         node(podLabel) {
-            stage('Verify GCloud Auth') {
-                container('gcloud') {
-                    sh 'gcloud auth list'
-                    sh 'gcloud config list project'
-                }
-            }
-
-            stage('Copy ZIP File') {
-                container('gcloud') {
-                    // Download the archived ZIP file
-                    step([$class: 'CopyArtifact',
-                          projectName: env.JOB_NAME,
-                          filter: config.zipFilePath,
-                          target: '/home/jenkins/agent/'])
-                    
-                    sh 'ls -la /home/jenkins/agent/'
-                    sh "find /home/jenkins/agent -name ${config.zipFilePath}"
-                    
-                    // Ensure the ZIP file is in the expected location
-                    sh "cp /home/jenkins/agent/${config.zipFilePath} /home/jenkins/agent/ || true"
-                }
-            }
-
-            stage('Verify ZIP File') {
-                container('gcloud') {
-                    sh "ls -la /home/jenkins/agent/"
-                    if (!fileExists("/home/jenkins/agent/${config.zipFilePath}")) {
-                        error("ZIP file not found: /home/jenkins/agent/${config.zipFilePath}")
-                    }
-                }
-            }
-
-            stage("Deploy Cloud Function: ${config.functionName}") {
-                container('gcloud') {
-                    def zipFileName = config.zipFilePath.split('/')[-1]
+            container('gcloud') {
+                stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
-                        set -x
-                        gcloud config set project ${config.projectId}
-
                         gcloud functions deploy ${config.functionName} \
                             --runtime ${config.runtime} \
                             --region ${config.region} \
-                            --source /home/jenkins/agent/${zipFileName} \
+                            --source ${config.zipFilePath} \
                             --service-account ${config.serviceAccountEmail} \
                             --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
@@ -116,37 +78,25 @@ def call(Map config) {
                     }
 
                     sh deployCommand
-
-                    echo "Cloud Function ${config.functionName} deployed successfully."
                 }
-            }
 
-            if (config.triggerType == 'pubsub') {
-                stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
-                    container('gcloud') {
+                if (config.triggerType == 'pubsub') {
+                    stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
                         sh """
                             gcloud pubsub topics create ${config.topicName} || true
-
                             gcloud scheduler jobs create pubsub ${config.functionName}-scheduler \
                                 --schedule '${config.schedule}' \
                                 --topic ${config.topicName} \
                                 --message-body '${config.pubsubTargetData}' \
                                 --time-zone '${config.timeZone}' || true
                         """
-
-                        echo "Pub/Sub topic and Cloud Scheduler job created successfully."
                     }
                 }
-            }
 
-            stage("Verify Cloud Function: ${config.functionName}") {
-                container('gcloud') {
+                stage("Verify Cloud Function: ${config.functionName}") {
                     sh """
                         functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
-
-                        if [ "\$functionStatus" == "ACTIVE" ]; then
-                            echo "Cloud Function ${config.functionName} is verified and in ACTIVE state."
-                        else
+                        if [ "\$functionStatus" != "ACTIVE" ]; then
                             echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
                             exit 1
                         fi
@@ -156,10 +106,7 @@ def call(Map config) {
                         sh """
                             functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
                             response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
-
-                            if [ "\$response" == "200" ]; then
-                                echo "HTTP-triggered Cloud Function ${config.functionName} is responding successfully."
-                            else
+                            if [ "\$response" != "200" ]; then
                                 echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
                                 exit 1
                             fi
