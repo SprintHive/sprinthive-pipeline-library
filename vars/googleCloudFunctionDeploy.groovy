@@ -1,17 +1,5 @@
 #!/usr/bin/groovy
 
-// To use this function, remember to upload your source to the relevant source bucket in the environment
-// you're deploying to. Here is an example for the Jenkinsfile:
-// stage('Prepare and Upload Function') {
-//     steps {
-//         script {
-//             sh "zip -r ${componentName}.zip . -x '*.git*'"
-//             sh "gsutil cp ${componentName}.zip gs://${sourceBucket}/${componentName}.zip"
-//             echo "Function ZIP uploaded to gs://${sourceBucket}/${componentName}.zip"
-//         }
-//     }
-// }
-
 def call(Map config) {
     def commonRequiredParams = [
         'functionName', 'projectId', 'serviceAccountEmail', 'zipFilePath',
@@ -57,6 +45,12 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
+                stage("Set Project and Authenticate") {
+                    sh "gcloud config set project ${config.projectId}"
+                    sh "gcloud auth list"
+                    sh "gcloud config list project"
+                }
+
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \
