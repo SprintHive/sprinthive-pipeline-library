@@ -86,26 +86,26 @@ def call(Map config) {
                     }
                 }
 
-                // stage("Verify Cloud Function: ${config.functionName}") {
-                //     sh """
-                //         functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
-                //         if [ "\$functionStatus" != "ACTIVE" ]; then
-                //             echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
-                //             exit 1
-                //         fi
-                //     """
+                stage("Verify Cloud Function: ${config.functionName}") {
+                    sh """
+                        functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
+                        if [ "\$functionStatus" != "ACTIVE" ]; then
+                            echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
+                            exit 1
+                        fi
+                    """
 
-                //     if (config.triggerType == 'http') {
-                //         sh """
-                //             functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
-                //             response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
-                //             if [ "\$response" != "200" ]; then
-                //                 echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
-                //                 exit 1
-                //             fi
-                //         """
-                //     }
-                // }
+                    if (config.triggerType == 'http') {
+                        sh """
+                            functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
+                            response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
+                            if [ "\$response" != "200" ]; then
+                                echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
+                                exit 1
+                            fi
+                        """
+                    }
+                }
             }
         }
     }
