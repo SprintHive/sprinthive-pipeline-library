@@ -52,7 +52,20 @@ def call(Map config) {
                 }
 
                 stage("Prepare and Upload Function") {
-                    sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' ."
+                    sh """
+                        # Try creating tar.gz file with warning suppressed
+                        if ! tar --warning=no-file-changed -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' .; then
+                            echo "Failed to create tar.gz directly. Creating a temporary copy..."
+                            tmp_dir=\$(mktemp -d)
+                            cp -R . \$tmp_dir
+                            cd \$tmp_dir
+                            tar -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' .
+                            mv ${config.functionName}.tar.gz ${WORKSPACE}/
+                            cd ${WORKSPACE}
+                            rm -rf \$tmp_dir
+                        fi
+                    """
+                    
                     sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
                     echo "Function tar.gz uploaded to ${config.zipFilePath}"
                 }
