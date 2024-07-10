@@ -3,7 +3,7 @@
 def call(Map config) {
     def commonRequiredParams = [
         'functionName', 'projectId', 'serviceAccountEmail', 'zipFilePath',
-        'region', 'environmentVariables', 'runtime', 'triggerType'
+        'region', 'environmentVariables', 'runtime', 'triggerType', 'sourceFolderPath'
     ]
 
     commonRequiredParams.each { param ->
@@ -45,84 +45,85 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
-                stage("Set Project and Authenticate") {
+                stage("Set Project") {
                     sh "gcloud config set project ${config.projectId}"
-                    sh "gcloud auth list"
-                    sh "gcloud config list project"
                 }
 
-                stage("Prepare and Upload Function") {
-                    sh """
-                        # Try creating tar.gz file with warning suppressed
-                        if ! tar --warning=no-file-changed -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' .; then
-                            echo "Failed to create tar.gz directly. Creating a temporary copy..."
-                            tmp_dir=\$(mktemp -d)
-                            cp -R . \$tmp_dir
-                            cd \$tmp_dir
-                            tar -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' .
-                            mv ${config.functionName}.tar.gz ${WORKSPACE}/
-                            cd ${WORKSPACE}
-                            rm -rf \$tmp_dir
-                        fi
-                    """
+                stage("Check for Changes and Prepare Function") {
+                    def hasChanges = false
+                    dir(config.sourceFolderPath) {
+                        def changes = sh(script: 'git diff --name-only HEAD^ HEAD .', returnStdout: true).trim()
+                        hasChanges = !changes.isEmpty()
+                        
+                        if (hasChanges) {
+                            sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
+                            sh "mv ${config.functionName}.tar.gz .."
+                        }
+                    }
                     
-                    sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
-                    echo "Function tar.gz uploaded to ${config.zipFilePath}"
-                }
+                    if (hasChanges) {
+                        stage("Upload Function") {
+                            sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
+                            echo "Function tar.gz uploaded to ${config.zipFilePath}"
+                        }
 
-                stage("Deploy Cloud Function: ${config.functionName}") {
-                    def deployCommand = """
-                        gcloud functions deploy ${config.functionName} \
-                            --runtime ${config.runtime} \
-                            --region ${config.region} \
-                            --source ${config.zipFilePath} \
-                            --service-account ${config.serviceAccountEmail} \
-                            --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                            ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
-                            ${config.timeout ? "--timeout ${config.timeout}" : ''} \
-                            ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \
-                            --verbosity debug
-                    """
+                        stage("Deploy Cloud Function: ${config.functionName}") {
+                            def deployCommand = """
+                                gcloud functions deploy ${config.functionName} \
+                                    --runtime ${config.runtime} \
+                                    --region ${config.region} \
+                                    --source ${config.zipFilePath} \
+                                    --service-account ${config.serviceAccountEmail} \
+                                    --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
+                                    ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
+                                    ${config.timeout ? "--timeout ${config.timeout}" : ''} \
+                                    ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \
+                                    --verbosity debug
+                            """
 
-                    if (config.triggerType == 'http') {
-                        deployCommand += " --trigger-http"
-                    } else if (config.triggerType == 'pubsub') {
-                        deployCommand += " --trigger-topic ${config.topicName}"
-                    }
+                            if (config.triggerType == 'http') {
+                                deployCommand += " --trigger-http"
+                            } else if (config.triggerType == 'pubsub') {
+                                deployCommand += " --trigger-topic ${config.topicName}"
+                            }
 
-                    sh deployCommand
-                }
+                            sh deployCommand
+                        }
 
-                if (config.triggerType == 'pubsub') {
-                    stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
-                        sh """
-                            gcloud scheduler jobs create pubsub ${config.functionName}-scheduler \
-                                --schedule '${config.schedule}' \
-                                --topic ${config.topicName} \
-                                --message-body '${config.pubsubTargetData}' \
-                                --time-zone '${config.timeZone}' || true
-                        """
-                    }
-                }
+                        if (config.triggerType == 'pubsub') {
+                            stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
+                                sh """
+                                    gcloud scheduler jobs create pubsub ${config.functionName}-scheduler \
+                                        --schedule '${config.schedule}' \
+                                        --topic ${config.topicName} \
+                                        --message-body '${config.pubsubTargetData}' \
+                                        --time-zone '${config.timeZone}' || true
+                                """
+                            }
+                        }
 
-                stage("Verify Cloud Function: ${config.functionName}") {
-                    sh """
-                        functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
-                        if [ "\$functionStatus" != "ACTIVE" ]; then
-                            echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
-                            exit 1
-                        fi
-                    """
+                        stage("Verify Cloud Function: ${config.functionName}") {
+                            sh """
+                                functionStatus=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(status)')
+                                if [ "\$functionStatus" != "ACTIVE" ]; then
+                                    echo "Cloud Function ${config.functionName} verification failed. Status: \$functionStatus"
+                                    exit 1
+                                fi
+                            """
 
-                    if (config.triggerType == 'http') {
-                        sh """
-                            functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
-                            response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
-                            if [ "\$response" != "200" ]; then
-                                echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
-                                exit 1
-                            fi
-                        """
+                            if (config.triggerType == 'http') {
+                                sh """
+                                    functionUrl=\$(gcloud functions describe ${config.functionName} --region ${config.region} --format='value(httpsTrigger.url)')
+                                    response=\$(curl -s -o /dev/null -w '%{http_code}' \${functionUrl})
+                                    if [ "\$response" != "200" ]; then
+                                        echo "HTTP-triggered Cloud Function ${config.functionName} verification failed. HTTP response code: \$response"
+                                        exit 1
+                                    fi
+                                """
+                            }
+                        }
+                    } else {
+                        echo "No changes detected in ${config.sourceFolderPath}. Skipping deployment."
                     }
                 }
             }
