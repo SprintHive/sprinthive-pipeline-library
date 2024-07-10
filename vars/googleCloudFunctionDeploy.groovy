@@ -51,6 +51,12 @@ def call(Map config) {
                     sh "gcloud config list project"
                 }
 
+                stage("Prepare and Upload Function") {
+                    sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' --exclude='Jenkinsfile' ."
+                    sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
+                    echo "Function tar.gz uploaded to ${config.zipFilePath}"
+                }
+
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \
