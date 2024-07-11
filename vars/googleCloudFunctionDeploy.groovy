@@ -50,9 +50,9 @@ def call(Map config) {
                 stage("Check for Changes and Prepare Function") {
                     def hasChanges = false
                     dir(config.sourceFolderPath) {
-                        def changes = sh(script: 'git diff --name-only HEAD^ HEAD .', returnStdout: true).trim()
+                        def changes = sh(script: 'git diff --name-only HEAD~1 HEAD .', returnStdout: true).trim()
                         hasChanges = !changes.isEmpty()
-                        
+
                         if (hasChanges) {
                             sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
                             sh "mv ${config.functionName}.tar.gz .."
