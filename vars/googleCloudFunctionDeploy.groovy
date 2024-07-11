@@ -47,15 +47,18 @@ def call(Map config) {
         node(podLabel) {
             container('gcloud') {
 
-                stage("Check for Changes and Prepare Function") {
-                    def hasChanges = false
+                def hasChanges = false
                     dir(config.sourceFolderPath) {
-                        def changes = sh(script: 'git diff --name-only HEAD~1 HEAD .', returnStdout: true).trim()
-                        hasChanges = !changes.isEmpty()
-
+                        // Use git status to check for changes
+                        def status = sh(script: 'git status --porcelain', returnStdout: true).trim()
+                        hasChanges = !status.isEmpty()
+                        
                         if (hasChanges) {
+                            echo "Changes detected in ${config.sourceFolderPath}"
                             sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
                             sh "mv ${config.functionName}.tar.gz .."
+                        } else {
+                            echo "No changes detected in ${config.sourceFolderPath}"
                         }
                     }
                     
