@@ -47,7 +47,8 @@ def call(Map config) {
         node(podLabel) {
             container('gcloud') {
 
-                def hasChanges = false
+                stage("Check for Changes and Prepare Function") {
+                    def hasChanges = false
                     dir(config.sourceFolderPath) {
                         // Use git status to check for changes
                         def status = sh(script: 'git status --porcelain', returnStdout: true).trim()
