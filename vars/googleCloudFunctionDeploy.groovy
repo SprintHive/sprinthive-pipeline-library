@@ -45,9 +45,6 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
-                stage("Set Project") {
-                    sh "gcloud config set project ${config.projectId}"
-                }
 
                 stage("Check for Changes and Prepare Function") {
                     def hasChanges = false
