@@ -33,6 +33,7 @@ def call(Map config) {
         apiVersion: v1
         kind: Pod
         spec:
+          serviceAccountName: jenkins-worker
           containers:
           - name: gcloud
             image: google/cloud-sdk:latest
