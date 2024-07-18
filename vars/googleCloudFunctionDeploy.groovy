@@ -47,13 +47,6 @@ def call(Map config) {
         node(podLabel) {
             container('gcloud') {
 
-                stage("Setup Authentication") {
-                    sh """
-                        gcloud auth application-default login --no-launch-browser
-                        gcloud config set project ${config.projectId}
-                    """
-                }
-
                 stage("Verify Authentication") {
                     sh """
                         echo "Current gcloud account:"
@@ -61,9 +54,16 @@ def call(Map config) {
                         
                         echo "Current gcloud project:"
                         gcloud config get-value project
+                        
+                        echo "Service account email:"
+                        curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email
                     """
                 }
-                
+
+                stage("Set Project") {
+                    sh "gcloud config set project ${config.projectId}"
+                }
+
                 stage("Prepare and Upload Function") {
                     dir(config.sourceFolderPath) {
                         sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
