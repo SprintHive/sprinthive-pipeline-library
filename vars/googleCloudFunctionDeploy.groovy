@@ -46,14 +46,12 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
-                stage("Prepare and Upload Function") {
-                    dir(config.sourceFolderPath) {
-                        sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
-                        sh "mv ${config.functionName}.tar.gz .."
-                    }
-                    
-                    sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
-                    echo "Function tar.gz uploaded to ${config.zipFilePath}"
+
+                stage("Setup Authentication") {
+                    sh """
+                        gcloud auth application-default login --no-launch-browser
+                        gcloud config set project ${config.projectId}
+                    """
                 }
 
                 stage("Verify Authentication") {
@@ -64,6 +62,16 @@ def call(Map config) {
                         echo "Current gcloud project:"
                         gcloud config get-value project
                     """
+                }
+                
+                stage("Prepare and Upload Function") {
+                    dir(config.sourceFolderPath) {
+                        sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
+                        sh "mv ${config.functionName}.tar.gz .."
+                    }
+                    
+                    sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
+                    echo "Function tar.gz uploaded to ${config.zipFilePath}"
                 }
 
                 stage("Deploy Cloud Function: ${config.functionName}") {
