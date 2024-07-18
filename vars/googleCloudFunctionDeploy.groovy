@@ -56,6 +56,16 @@ def call(Map config) {
                     echo "Function tar.gz uploaded to ${config.zipFilePath}"
                 }
 
+                stage("Verify Authentication") {
+                    sh """
+                        echo "Current gcloud account:"
+                        gcloud auth list --filter=status:ACTIVE --format="value(account)"
+                        
+                        echo "Current gcloud project:"
+                        gcloud config get-value project
+                    """
+                }
+
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \
