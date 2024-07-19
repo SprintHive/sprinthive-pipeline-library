@@ -52,19 +52,11 @@ def call(Map config) {
                         pwd
                         ls -la
                         
-                        # Ensure source directory exists
-                        if [ ! -d "${WORKSPACE}/${config.sourceFolderPath}" ]; then
-                            echo "Error: Source directory ${WORKSPACE}/${config.sourceFolderPath} does not exist"
-                            exit 1
-                        fi
-                        
                         # Create a temporary directory
                         TEMP_DIR=\$(mktemp -d)
                         
                         # Copy files to the temporary directory, excluding .git
-                        cp -r ${WORKSPACE}/${config.sourceFolderPath}/* \$TEMP_DIR/ || true
-                        
-                        # Remove .git directory if it exists
+                        cp -r . \$TEMP_DIR/
                         rm -rf \$TEMP_DIR/.git
                         
                         # Debug: List contents of temp directory
