@@ -40,6 +40,9 @@ def call(Map config) {
             command:
             - cat
             tty: true
+        volumes:
+          - name: workspace-volume
+            emptyDir: {}
     ''') {
         node(podLabel) {
             container('gcloud') {
