@@ -48,7 +48,8 @@ def call(Map config) {
             container('gcloud') {
                 stage("Prepare and Upload Function") {
                     dir(config.sourceFolderPath) {
-                        sh "tar -czf ${config.functionName}.tar.gz --warning=no-file-changed --exclude='.git' ."
+                        sh "touch ${config.functionName}.tar.gz"
+                        sh "tar -czf ${config.functionName}.tar.gz --exclude=${config.functionName}.tar.gz --exclude='.git' ."
                         sh "mv ${config.functionName}.tar.gz .."
                     }
                     
