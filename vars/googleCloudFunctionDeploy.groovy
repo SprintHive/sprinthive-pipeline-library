@@ -36,33 +36,20 @@ def call(Map config) {
                 }
             }
 
-            stage('Copy Function Archive') {
+            stage('Retrieve Function Archive') {
                 container('gcloud') {
-                    script {
-                        try {
-                            step([$class: 'CopyArtifact',
-                                projectName: env.JOB_NAME,
-                                filter: "${config.functionName}.tar.gz",
-                                fingerprintArtifacts: true,
-                                selector: [$class: 'SpecificBuildSelector', buildNumber: env.BUILD_NUMBER]])
-                            
-                            sh """
-                                echo "Archive file details:"
-                                ls -l ${config.functionName}.tar.gz || echo "Archive not found"
-                                if [ -f "${config.functionName}.tar.gz" ]; then
-                                    echo "\nContents of the archive:"
-                                    tar -tvf ${config.functionName}.tar.gz
-                                else
-                                    echo "Error: Archive file not found"
-                                    exit 1
-                                fi
-                            """
-                        } catch (Exception e) {
-                            echo "Error occurred while copying artifact: ${e.message}"
-                            echo "Stack trace: ${e.stackTrace.join('\n')}"
-                            error "Failed to copy function archive"
-                        }
-                    }
+                    unstash "function-archive"
+                    sh """
+                        echo "Archive file details:"
+                        ls -l ${config.functionName}.tar.gz || echo "Archive not found"
+                        if [ -f "${config.functionName}.tar.gz" ]; then
+                            echo "\nContents of the archive:"
+                            tar -tvf ${config.functionName}.tar.gz
+                        else
+                            echo "Error: Archive file not found"
+                            exit 1
+                        fi
+                    """
                 }
             }
 
