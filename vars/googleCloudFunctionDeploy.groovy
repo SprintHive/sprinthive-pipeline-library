@@ -83,7 +83,6 @@ def call(Map config) {
                             echo "Error: Archive file not found"
                             exit 1
                         fi
-                        gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS
                         gcloud config set project ${config.projectId}
                         gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
