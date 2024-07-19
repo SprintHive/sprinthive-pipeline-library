@@ -20,33 +20,32 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             stage('Prepare Function Archive') {
-                // Copy workspace contents to pod
-                sh "cp -R ${env.WORKSPACE}/* ."
+                // Debug: Print current directory and its contents
+                sh "pwd && ls -la"
                 
-                sh """
-                    echo "Current working directory:"
-                    pwd
-                    echo "\nDirectory contents:"
-                    ls -la
-                    
-                    cd ${config.sourceFolderPath}
-                    echo "\nFunction directory contents:"
-                    ls -la
-                    
-                    tar -cvzf ../${config.functionName}.tar.gz .
-                    cd ..
-                    
-                    if [ ! -s ${config.functionName}.tar.gz ]; then
-                        echo "Error: Created archive is empty"
-                        exit 1
-                    fi
-                    
-                    echo "\nContents of the archive:"
-                    tar -tvf ${config.functionName}.tar.gz
-                    
-                    echo "\nArchive file details:"
-                    ls -l ${config.functionName}.tar.gz
-                """
+                // Use config.sourceFolderPath directly without copying
+                dir(config.sourceFolderPath) {
+                    sh """
+                        echo "Current working directory:"
+                        pwd
+                        echo "\nFunction directory contents:"
+                        ls -la
+                        
+                        tar -cvzf ../${config.functionName}.tar.gz .
+                        cd ..
+                        
+                        if [ ! -s ${config.functionName}.tar.gz ]; then
+                            echo "Error: Created archive is empty"
+                            exit 1
+                        fi
+                        
+                        echo "\nContents of the archive:"
+                        tar -tvf ${config.functionName}.tar.gz
+                        
+                        echo "\nArchive file details:"
+                        ls -l ${config.functionName}.tar.gz
+                    """
+                }
             }
 
             container('gcloud') {
