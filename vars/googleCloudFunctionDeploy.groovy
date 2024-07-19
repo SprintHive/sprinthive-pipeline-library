@@ -26,25 +26,53 @@ def call(Map config) {
                         pwd
                         echo "\nDirectory contents:"
                         ls -la
+                        echo "\nJenkins workspace:"
+                        echo ${env.WORKSPACE}
+                        echo "\nJob name:"
+                        echo ${env.JOB_NAME}
+                        echo "\nBuild number:"
+                        echo ${env.BUILD_NUMBER}
                     """
                 }
             }
 
             stage('Copy Function Archive') {
                 container('gcloud') {
-                    copyArtifacts(projectName: env.JOB_NAME, filter: "${config.functionName}.tar.gz", fingerprintArtifacts: true)
-                    sh """
-                        echo "Archive file details:"
-                        ls -l ${config.functionName}.tar.gz
-                        echo "\nContents of the archive:"
-                        tar -tvf ${config.functionName}.tar.gz
-                    """
+                    script {
+                        try {
+                            step([$class: 'CopyArtifact',
+                                projectName: env.JOB_NAME,
+                                filter: "${config.functionName}.tar.gz",
+                                fingerprintArtifacts: true,
+                                selector: [$class: 'SpecificBuildSelector', buildNumber: env.BUILD_NUMBER]])
+                            
+                            sh """
+                                echo "Archive file details:"
+                                ls -l ${config.functionName}.tar.gz || echo "Archive not found"
+                                if [ -f "${config.functionName}.tar.gz" ]; then
+                                    echo "\nContents of the archive:"
+                                    tar -tvf ${config.functionName}.tar.gz
+                                else
+                                    echo "Error: Archive file not found"
+                                    exit 1
+                                fi
+                            """
+                        } catch (Exception e) {
+                            echo "Error occurred while copying artifact: ${e.message}"
+                            echo "Stack trace: ${e.stackTrace.join('\n')}"
+                            error "Failed to copy function archive"
+                        }
+                    }
                 }
             }
 
             container('gcloud') {
                 stage("Upload Function Archive") {
                     sh """
+                        if [ ! -f "${config.functionName}.tar.gz" ]; then
+                            echo "Error: Archive file not found"
+                            exit 1
+                        fi
                         gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
                         gcloud storage ls -l ${config.gcsPath}
