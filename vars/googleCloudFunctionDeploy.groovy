@@ -22,8 +22,7 @@ def call(Map config) {
               volumes:
               - name: workspace-volume
                 emptyDir: {}
-        """,
-        workspaceVolume: workspaceVolume(volumePath: '/home/jenkins/agent')
+        """
     ) {
         node(podLabel) {
             stage('Debug Environment') {
