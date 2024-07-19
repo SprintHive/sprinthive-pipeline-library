@@ -47,28 +47,10 @@ def call(Map config) {
         node(podLabel) {
             container('gcloud') {
                 stage("Prepare and Upload Function") {
-                    sh """
-                        # Debug: Print current directory and its contents
-                        pwd
-                        ls -la
-                        
-                        # Create a temporary directory
-                        TEMP_DIR=\$(mktemp -d)
-                        
-                        # Copy files to the temporary directory, excluding .git
-                        cp -r . \$TEMP_DIR/
-                        rm -rf \$TEMP_DIR/.git
-                        
-                        # Debug: List contents of temp directory
-                        echo "Contents of temp directory:"
-                        ls -la \$TEMP_DIR
-                        
-                        # Create the tar.gz archive from the temporary directory
-                        tar -czf ${config.functionName}.tar.gz -C \$TEMP_DIR .
-                        
-                        # Clean up the temporary directory
-                        rm -rf \$TEMP_DIR
-                    """
+                    dir(config.sourceFolderPath) {
+                        sh "tar -czf ${config.functionName}.tar.gz --exclude='.git' ."
+                        sh "mv ${config.functionName}.tar.gz .."
+                    }
                     
                     sh "gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}"
                     echo "Function tar.gz uploaded to ${config.zipFilePath}"
