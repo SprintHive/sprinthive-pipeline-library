@@ -43,37 +43,29 @@ def call(Map config) {
                 container('gcloud') {
                     script {
                         try {
-                            def artifactDir = "/home/jenkins/function-archives"
                             def archiveName = "${config.functionName}.tar.gz"
                             
-                            sh """
-                                echo "Creating artifact directory..."
-                                mkdir -p ${artifactDir}
-                                echo "Artifact directory contents before copy:"
-                                ls -la ${artifactDir}
-                            """
+                            // Print workspace information
+                            echo "Current workspace: ${env.WORKSPACE}"
+                            sh "ls -la ${env.WORKSPACE}"
                             
-                            step([$class: 'CopyArtifact',
-                                projectName: env.JOB_NAME,
-                                filter: archiveName,
-                                fingerprintArtifacts: true,
-                                target: artifactDir,
-                                selector: [$class: 'SpecificBuildSelector', buildNumber: env.BUILD_NUMBER]])
+                            // Check if the archive exists in the workspace
+                            if (fileExists("${env.WORKSPACE}/${archiveName}")) {
+                                echo "Archive found in workspace. Copying to current directory..."
+                                sh "cp ${env.WORKSPACE}/${archiveName} ."
+                            } else {
+                                echo "Archive not found in workspace. Attempting to copy from artifacts..."
+                                
+                                // Use copyArtifacts step instead of CopyArtifact
+                                copyArtifacts(projectName: env.JOB_NAME, 
+                                            selector: specific("${env.BUILD_NUMBER}"), 
+                                            filter: archiveName, 
+                                            fingerprintArtifacts: true)
+                            }
                             
+                            // Check if the file now exists in the current directory
                             sh """
-                                echo "Artifact directory contents after copy:"
-                                ls -la ${artifactDir}
-                                echo "Current directory contents:"
-                                ls -la
-                                echo "Attempting to move archive to current directory..."
-                                if [ -f "${artifactDir}/${archiveName}" ]; then
-                                    mv ${artifactDir}/${archiveName} .
-                                    echo "Archive moved successfully."
-                                else
-                                    echo "Warning: Archive not found in ${artifactDir}. Searching for it..."
-                                    find / -name ${archiveName} 2>/dev/null || echo "Archive not found anywhere on the filesystem."
-                                fi
-                                echo "Current directory contents after move attempt:"
+                                echo "Current directory contents after copy attempt:"
                                 ls -la
                                 if [ -f "${archiveName}" ]; then
                                     echo "Contents of the archive:"
