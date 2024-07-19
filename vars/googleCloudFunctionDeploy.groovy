@@ -43,7 +43,8 @@ def call(Map config) {
                         echo "\nFull job name:"
                         echo ${env.JOB_BASE_NAME}
                         echo "\nSource folder contents:"
-                        ls -la /home/jenkins/agent/workspace/SprintHive/dev/build/temp-gcloud-function/${config.sourceFolderPath}
+                        ls -la /home/jenkins/agent/workspace || echo "Workspace not found"
+                        ls -la /home/jenkins/agent/workspace/${config.sourceFolderPath} || echo "Source folder not found"
                     """
                 }
             }
@@ -51,7 +52,12 @@ def call(Map config) {
             stage('Prepare Function Archive') {
                 container('gcloud') {
                     sh """
-                        cd /home/jenkins/agent/workspace/SprintHive/dev/build/temp-gcloud-function/${config.sourceFolderPath}
+                        cd /home/jenkins/agent/workspace
+                        if [ ! -d "${config.sourceFolderPath}" ]; then
+                            echo "Error: Source folder '${config.sourceFolderPath}' not found"
+                            exit 1
+                        fi
+                        cd "${config.sourceFolderPath}"
                         echo "Current working directory:"
                         pwd
                         echo "\nFunction directory contents:"
