@@ -1,32 +1,6 @@
 #!/usr/bin/groovy
 
 def call(Map config) {
-    def commonRequiredParams = [
-        'functionName', 'projectId', 'serviceAccountEmail', 'archiveFile', 'gcsPath',
-        'region', 'environmentVariables', 'runtime', 'triggerType', 'sourceFolderPath'
-    ]
-
-    commonRequiredParams.each { param ->
-        if (!config.containsKey(param) || config[param] == null || config[param].toString().trim().isEmpty()) {
-            error("Required parameter '${param}' is missing or empty")
-        }
-    }
-
-    switch(config.triggerType) {
-        case 'http':
-            break
-        case 'pubsub':
-            def pubsubParams = ['topicName', 'schedule', 'timeZone', 'pubsubTargetData']
-            pubsubParams.each { param ->
-                if (!config.containsKey(param) || config[param] == null || config[param].toString().trim().isEmpty()) {
-                    error("Required Pub/Sub parameter '${param}' is missing or empty")
-                }
-            }
-            break
-        default:
-            error("Invalid triggerType: ${config.triggerType}. Supported types are 'http' and 'pubsub'")
-    }
-
     def podLabel = "gcloud-${UUID.randomUUID().toString()}"
     
     podTemplate(label: podLabel, yaml: '''
@@ -40,17 +14,40 @@ def call(Map config) {
             command:
             - cat
             tty: true
-            volumeMounts:
-            - name: workspace-volume
-              mountPath: /home/jenkins/agent
           volumes:
           - name: workspace-volume
-            hostPath:
-              path: ${env.WORKSPACE}
-              type: Directory
+            emptyDir: {}
     ''') {
         node(podLabel) {
-            containerCopyOver(podLabel, 'gcloud', config.archiveFile, '/tmp/function.tar.gz')
+            stage('Prepare Function Archive') {
+                // Copy workspace contents to pod
+                sh "cp -R ${env.WORKSPACE}/* ."
+                
+                sh """
+                    echo "Current working directory:"
+                    pwd
+                    echo "\nDirectory contents:"
+                    ls -la
+                    
+                    cd ${config.sourceFolderPath}
+                    echo "\nFunction directory contents:"
+                    ls -la
+                    
+                    tar -cvzf ../${config.functionName}.tar.gz .
+                    cd ..
+                    
+                    if [ ! -s ${config.functionName}.tar.gz ]; then
+                        echo "Error: Created archive is empty"
+                        exit 1
+                    fi
+                    
+                    echo "\nContents of the archive:"
+                    tar -tvf ${config.functionName}.tar.gz
+                    
+                    echo "\nArchive file details:"
+                    ls -l ${config.functionName}.tar.gz
+                """
+            }
 
             container('gcloud') {
                 stage("Verify Environment") {
@@ -59,10 +56,8 @@ def call(Map config) {
                         pwd
                         echo "\nDirectory contents in gcloud container:"
                         ls -la
-                        echo "\nTemp directory contents:"
-                        ls -la /tmp
                         echo "\nArchive file details:"
-                        ls -l /tmp/function.tar.gz || echo "Archive not found"
+                        ls -l ${config.functionName}.tar.gz || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
@@ -70,8 +65,7 @@ def call(Map config) {
 
                 stage("Upload Function Archive") {
                     sh """
-                        echo "Attempting to copy file from: /tmp/function.tar.gz"
-                        gcloud storage cp /tmp/function.tar.gz ${config.gcsPath}
+                        gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
                         gcloud storage ls -l ${config.gcsPath}
                     """
