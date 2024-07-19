@@ -2,7 +2,7 @@
 
 def call(Map config) {
     def commonRequiredParams = [
-        'functionName', 'projectId', 'serviceAccountEmail', 'zipFilePath',
+        'functionName', 'projectId', 'serviceAccountEmail', 'archiveFile', 'gcsPath',
         'region', 'environmentVariables', 'runtime', 'triggerType', 'sourceFolderPath'
     ]
 
@@ -46,12 +46,20 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
+                stage("Upload Function Archive") {
+                    sh """
+                        gcloud storage cp ${config.archiveFile} ${config.gcsPath}
+                        echo "Function archive uploaded to ${config.gcsPath}"
+                        gcloud storage ls -l ${config.gcsPath}
+                    """
+                }
+
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \
                             --runtime ${config.runtime} \
                             --region ${config.region} \
-                            --source ${config.zipFilePath} \
+                            --source ${config.gcsPath} \
                             --service-account ${config.serviceAccountEmail} \
                             --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
