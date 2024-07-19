@@ -43,34 +43,50 @@ def call(Map config) {
                 container('gcloud') {
                     script {
                         try {
-                            // Copy the archive to a known location in the Jenkins home directory
                             def artifactDir = "/home/jenkins/function-archives"
-                            sh "mkdir -p ${artifactDir}"
+                            def archiveName = "${config.functionName}.tar.gz"
+                            
+                            sh """
+                                echo "Creating artifact directory..."
+                                mkdir -p ${artifactDir}
+                                echo "Artifact directory contents before copy:"
+                                ls -la ${artifactDir}
+                            """
                             
                             step([$class: 'CopyArtifact',
                                 projectName: env.JOB_NAME,
-                                filter: "${config.functionName}.tar.gz",
+                                filter: archiveName,
                                 fingerprintArtifacts: true,
                                 target: artifactDir,
                                 selector: [$class: 'SpecificBuildSelector', buildNumber: env.BUILD_NUMBER]])
                             
-                            // Move the archive to the current working directory
                             sh """
-                                mv ${artifactDir}/${config.functionName}.tar.gz .
-                                echo "Archive file details:"
-                                ls -l ${config.functionName}.tar.gz || echo "Archive not found"
-                                if [ -f "${config.functionName}.tar.gz" ]; then
-                                    echo "\nContents of the archive:"
-                                    tar -tvf ${config.functionName}.tar.gz
+                                echo "Artifact directory contents after copy:"
+                                ls -la ${artifactDir}
+                                echo "Current directory contents:"
+                                ls -la
+                                echo "Attempting to move archive to current directory..."
+                                if [ -f "${artifactDir}/${archiveName}" ]; then
+                                    mv ${artifactDir}/${archiveName} .
+                                    echo "Archive moved successfully."
                                 else
-                                    echo "Error: Archive file not found"
+                                    echo "Warning: Archive not found in ${artifactDir}. Searching for it..."
+                                    find / -name ${archiveName} 2>/dev/null || echo "Archive not found anywhere on the filesystem."
+                                fi
+                                echo "Current directory contents after move attempt:"
+                                ls -la
+                                if [ -f "${archiveName}" ]; then
+                                    echo "Contents of the archive:"
+                                    tar -tvf ${archiveName}
+                                else
+                                    echo "Error: Archive file not found in current directory"
                                     exit 1
                                 fi
                             """
                         } catch (Exception e) {
-                            echo "Error occurred while copying artifact: ${e.message}"
+                            echo "Error occurred while handling function archive: ${e.message}"
                             echo "Stack trace: ${e.stackTrace.join('\n')}"
-                            error "Failed to copy function archive"
+                            error "Failed to process function archive"
                         }
                     }
                 }
