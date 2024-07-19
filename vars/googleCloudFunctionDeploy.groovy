@@ -20,11 +20,13 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             stage('Prepare Function Archive') {
-                // Debug: Print current directory and its contents
-                sh "pwd && ls -la"
+                // Copy workspace contents to pod
+                container('gcloud') {
+                    sh "mkdir -p /home/jenkins/agent/workspace/${env.JOB_NAME}"
+                    sh "cp -R \$(pwd)/* /home/jenkins/agent/workspace/${env.JOB_NAME}/"
+                }
                 
-                // Use config.sourceFolderPath directly without copying
-                dir(config.sourceFolderPath) {
+                dir("/home/jenkins/agent/workspace/${env.JOB_NAME}/${config.sourceFolderPath}") {
                     sh """
                         echo "Current working directory:"
                         pwd
@@ -54,9 +56,9 @@ def call(Map config) {
                         echo "Current working directory in gcloud container:"
                         pwd
                         echo "\nDirectory contents in gcloud container:"
-                        ls -la
+                        ls -la /home/jenkins/agent/workspace/${env.JOB_NAME}/
                         echo "\nArchive file details:"
-                        ls -l ${config.functionName}.tar.gz || echo "Archive not found"
+                        ls -l /home/jenkins/agent/workspace/${env.JOB_NAME}/${config.functionName}.tar.gz || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
@@ -64,6 +66,7 @@ def call(Map config) {
 
                 stage("Upload Function Archive") {
                     sh """
+                        cd /home/jenkins/agent/workspace/${env.JOB_NAME}/
                         gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
                         gcloud storage ls -l ${config.gcsPath}
