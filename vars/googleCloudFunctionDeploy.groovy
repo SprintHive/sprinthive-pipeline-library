@@ -16,14 +16,6 @@ def call(Map config) {
                 command:
                 - cat
                 tty: true
-                volumeMounts:
-                - name: workspace-volume
-                  mountPath: /home/jenkins/agent
-              volumes:
-              - name: workspace-volume
-                hostPath:
-                  path: ${env.WORKSPACE}
-                  type: Directory
         """
     ) {
         node(podLabel) {
@@ -34,89 +26,38 @@ def call(Map config) {
                         pwd
                         echo "\nDirectory contents:"
                         ls -la
-                        echo "\nJenkins workspace:"
-                        echo ${env.WORKSPACE}
-                        echo "\nWorkspace contents:"
-                        ls -la /home/jenkins/agent
-                        echo "\nJob name:"
-                        echo ${env.JOB_NAME}
-                        echo "\nFull job name:"
-                        echo ${env.JOB_BASE_NAME}
-                        echo "\nSource folder contents:"
-                        ls -la /home/jenkins/agent/workspace || echo "Workspace not found"
-                        ls -la /home/jenkins/agent/workspace/${config.sourceFolderPath} || echo "Source folder not found"
                     """
                 }
             }
 
-            stage('Prepare Function Archive') {
+            stage('Copy Function Archive') {
                 container('gcloud') {
+                    copyArtifacts(projectName: env.JOB_NAME, filter: "${config.functionName}.tar.gz", fingerprintArtifacts: true)
                     sh """
-                        cd /home/jenkins/agent/workspace
-                        if [ ! -d "${config.sourceFolderPath}" ]; then
-                            echo "Error: Source folder '${config.sourceFolderPath}' not found"
-                            exit 1
-                        fi
-                        cd "${config.sourceFolderPath}"
-                        echo "Current working directory:"
-                        pwd
-                        echo "\nFunction directory contents:"
-                        ls -la
-                        
-                        if [ -z "\$(ls -A)" ]; then
-                            echo "Error: Source directory is empty"
-                            exit 1
-                        fi
-                        
-                        tar -cvzf "/home/jenkins/agent/${config.functionName}.tar.gz" .
-                        cd /home/jenkins/agent
-                        
-                        if [ ! -s "${config.functionName}.tar.gz" ]; then
-                            echo "Error: Created archive is empty"
-                            exit 1
-                        fi
-                        
+                        echo "Archive file details:"
+                        ls -l ${config.functionName}.tar.gz
                         echo "\nContents of the archive:"
-                        tar -tvf "${config.functionName}.tar.gz"
-                        
-                        echo "\nArchive file details:"
-                        ls -l "${config.functionName}.tar.gz"
+                        tar -tvf ${config.functionName}.tar.gz
                     """
                 }
             }
 
             container('gcloud') {
-                stage("Verify Environment") {
-                    sh """
-                        echo "Current working directory in gcloud container:"
-                        pwd
-                        echo "\nDirectory contents in gcloud container:"
-                        ls -la
-                        echo "\nWorkspace contents:"
-                        ls -la /home/jenkins/agent
-                        echo "\nArchive file details:"
-                        ls -l "/home/jenkins/agent/${config.functionName}.tar.gz" || echo "Archive not found"
-                        echo "\nGcloud version:"
-                        gcloud version
-                    """
-                }
-
                 stage("Upload Function Archive") {
                     sh """
-                        cd /home/jenkins/agent
-                        gcloud storage cp "${config.functionName}.tar.gz" "${config.gcsPath}"
+                        gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
-                        gcloud storage ls -l "${config.gcsPath}"
+                        gcloud storage ls -l ${config.gcsPath}
                     """
                 }
 
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
-                        gcloud functions deploy "${config.functionName}" \\
-                            --runtime "${config.runtime}" \\
-                            --region "${config.region}" \\
-                            --source "${config.gcsPath}" \\
-                            --service-account "${config.serviceAccountEmail}" \\
+                        gcloud functions deploy ${config.functionName} \\
+                            --runtime ${config.runtime} \\
+                            --region ${config.region} \\
+                            --source ${config.gcsPath} \\
+                            --service-account ${config.serviceAccountEmail} \\
                             --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
                             ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
@@ -127,7 +68,7 @@ def call(Map config) {
                     if (config.triggerType == 'http') {
                         deployCommand += " --trigger-http"
                     } else if (config.triggerType == 'pubsub') {
-                        deployCommand += " --trigger-topic \"${config.topicName}\""
+                        deployCommand += " --trigger-topic ${config.topicName}"
                     }
 
                     sh deployCommand
