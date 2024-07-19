@@ -52,7 +52,8 @@ def call(Map config) {
                         TEMP_DIR=\$(mktemp -d)
                         
                         # Copy files to the temporary directory, excluding .git
-                        rsync -av --exclude='.git' ${config.sourceFolderPath}/ \$TEMP_DIR/
+                        cp -r ${config.sourceFolderPath}/* \$TEMP_DIR/
+                        rm -rf \$TEMP_DIR/.git
                         
                         # Create the tar.gz archive from the temporary directory
                         tar -czf ${config.functionName}.tar.gz -C \$TEMP_DIR .
