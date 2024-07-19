@@ -48,12 +48,28 @@ def call(Map config) {
             container('gcloud') {
                 stage("Prepare and Upload Function") {
                     sh """
+                        # Debug: Print current directory and its contents
+                        pwd
+                        ls -la
+                        
+                        # Ensure source directory exists
+                        if [ ! -d "${WORKSPACE}/${config.sourceFolderPath}" ]; then
+                            echo "Error: Source directory ${WORKSPACE}/${config.sourceFolderPath} does not exist"
+                            exit 1
+                        fi
+                        
                         # Create a temporary directory
                         TEMP_DIR=\$(mktemp -d)
                         
                         # Copy files to the temporary directory, excluding .git
-                        cp -r ${config.sourceFolderPath}/* \$TEMP_DIR/
+                        cp -r ${WORKSPACE}/${config.sourceFolderPath}/* \$TEMP_DIR/ || true
+                        
+                        # Remove .git directory if it exists
                         rm -rf \$TEMP_DIR/.git
+                        
+                        # Debug: List contents of temp directory
+                        echo "Contents of temp directory:"
+                        ls -la \$TEMP_DIR
                         
                         # Create the tar.gz archive from the temporary directory
                         tar -czf ${config.functionName}.tar.gz -C \$TEMP_DIR .
