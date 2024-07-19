@@ -40,9 +40,14 @@ def call(Map config) {
             command:
             - cat
             tty: true
-        volumes:
+            volumeMounts:
+            - name: workspace-volume
+              mountPath: /home/jenkins/agent
+          volumes:
           - name: workspace-volume
-            emptyDir: {}
+            hostPath:
+              path: ${env.WORKSPACE}
+              type: Directory
     ''') {
         node(podLabel) {
             container('gcloud') {
@@ -52,8 +57,10 @@ def call(Map config) {
                         pwd
                         echo "\nDirectory contents in gcloud container:"
                         ls -la
+                        echo "\nWorkspace contents:"
+                        ls -la /home/jenkins/agent
                         echo "\nFull directory structure in gcloud container:"
-                        find / -name '${config.functionName}.tar.gz' 2>/dev/null || echo "Archive not found"
+                        find /home/jenkins/agent -name '${config.functionName}.tar.gz' || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
