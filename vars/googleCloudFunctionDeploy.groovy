@@ -109,8 +109,7 @@ def call(Map config) {
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
                             ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
                             ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
-                            --verbosity debug \\
-                            --trigger-http
+                            --verbosity debug
                     """
 
                     if (config.triggerType == 'http') {
