@@ -46,40 +46,40 @@ def call(Map config) {
     ''') {
         node(podLabel) {
             container('gcloud') {
-                stage("Prepare and Upload Function") {
-                    dir(config.sourceFolderPath) {
-                        // Print current working directory and list its contents
-                        sh "pwd && ls -la"
+                // stage("Prepare and Upload Function") {
+                //     dir(config.sourceFolderPath) {
+                //         // Print current working directory and list its contents
+                //         sh "pwd && ls -la"
                         
-                        // Create the archive with verbose output
-                        sh """
-                            set -e
-                            tar -cvzf ${config.functionName}.tar.gz --exclude='.git' .
+                //         // Create the archive with verbose output
+                //         sh """
+                //             set -e
+                //             tar -cvzf ${config.functionName}.tar.gz --exclude='.git' .
                             
-                            # Verify the archive is not empty
-                            if [ ! -s ${config.functionName}.tar.gz ]; then
-                                echo "Error: Created archive is empty"
-                                exit 1
-                            fi
+                //             # Verify the archive is not empty
+                //             if [ ! -s ${config.functionName}.tar.gz ]; then
+                //                 echo "Error: Created archive is empty"
+                //                 exit 1
+                //             fi
                             
-                            # List the contents of the archive
-                            tar -tvf ${config.functionName}.tar.gz
-                        """
+                //             # List the contents of the archive
+                //             tar -tvf ${config.functionName}.tar.gz
+                //         """
                         
-                        // Move the archive to the parent directory
-                        sh "mv ${config.functionName}.tar.gz .."
-                    }
+                //         // Move the archive to the parent directory
+                //         sh "mv ${config.functionName}.tar.gz .."
+                //     }
                     
-                    // Upload the archive to Google Cloud Storage
-                    sh """
-                        set -e
-                        gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}
-                        echo "Function tar.gz uploaded to ${config.zipFilePath}"
+                //     // Upload the archive to Google Cloud Storage
+                //     sh """
+                //         set -e
+                //         gcloud storage cp ${config.functionName}.tar.gz ${config.zipFilePath}
+                //         echo "Function tar.gz uploaded to ${config.zipFilePath}"
                         
-                        # Verify the uploaded file
-                        gcloud storage ls -l ${config.zipFilePath}
-                    """
-                }
+                //         # Verify the uploaded file
+                //         gcloud storage ls -l ${config.zipFilePath}
+                //     """
+                // }
 
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     def deployCommand = """
