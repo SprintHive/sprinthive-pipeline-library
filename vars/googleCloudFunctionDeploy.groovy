@@ -21,7 +21,9 @@ def call(Map config) {
                   mountPath: /home/jenkins/agent
               volumes:
               - name: workspace-volume
-                emptyDir: {}
+                hostPath:
+                  path: ${env.WORKSPACE}
+                  type: Directory
         """
     ) {
         node(podLabel) {
@@ -33,20 +35,20 @@ def call(Map config) {
                         echo "\nDirectory contents:"
                         ls -la
                         echo "\nJenkins workspace:"
-                        echo \$WORKSPACE
+                        echo ${env.WORKSPACE}
                         echo "\nWorkspace contents:"
-                        ls -la \$WORKSPACE
+                        ls -la /home/jenkins/agent
                         echo "\nJob name:"
-                        echo \$JOB_NAME
+                        echo ${env.JOB_NAME}
                         echo "\nFull job name:"
-                        echo \$JOB_BASE_NAME
+                        echo ${env.JOB_BASE_NAME}
                     """
                 }
             }
 
             stage('Prepare Function Archive') {
                 container('gcloud') {
-                    dir("\$WORKSPACE/${config.sourceFolderPath}") {
+                    dir("/home/jenkins/agent/${config.sourceFolderPath}") {
                         sh """
                             echo "Current working directory:"
                             pwd
@@ -79,9 +81,9 @@ def call(Map config) {
                         echo "\nDirectory contents in gcloud container:"
                         ls -la
                         echo "\nWorkspace contents:"
-                        ls -la \$WORKSPACE
+                        ls -la /home/jenkins/agent
                         echo "\nArchive file details:"
-                        ls -l \$WORKSPACE/\${config.functionName}.tar.gz || echo "Archive not found"
+                        ls -l /home/jenkins/agent/\${config.functionName}.tar.gz || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
@@ -89,7 +91,7 @@ def call(Map config) {
 
                 stage("Upload Function Archive") {
                     sh """
-                        cd \$WORKSPACE
+                        cd /home/jenkins/agent
                         gcloud storage cp \${config.functionName}.tar.gz \${config.gcsPath}
                         echo "Function archive uploaded to \${config.gcsPath}"
                         gcloud storage ls -l \${config.gcsPath}
