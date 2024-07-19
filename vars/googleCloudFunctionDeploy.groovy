@@ -3,50 +3,72 @@
 def call(Map config) {
     def podLabel = "gcloud-${UUID.randomUUID().toString()}"
     
-    podTemplate(label: podLabel, yaml: '''
-        apiVersion: v1
-        kind: Pod
-        spec:
-          serviceAccountName: jenkins-worker
-          containers:
-          - name: gcloud
-            image: google/cloud-sdk:latest
-            command:
-            - cat
-            tty: true
-          volumes:
-          - name: workspace-volume
-            emptyDir: {}
-    ''') {
+    podTemplate(
+        label: podLabel, 
+        yaml: """
+            apiVersion: v1
+            kind: Pod
+            spec:
+              serviceAccountName: jenkins-worker
+              containers:
+              - name: gcloud
+                image: google/cloud-sdk:latest
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - name: workspace-volume
+                  mountPath: /home/jenkins/agent
+              volumes:
+              - name: workspace-volume
+                emptyDir: {}
+        """,
+        workspaceVolume: workspaceVolume(volumePath: '/home/jenkins/agent')
+    ) {
         node(podLabel) {
-            stage('Prepare Function Archive') {
-                // Copy workspace contents to pod
+            stage('Debug Environment') {
                 container('gcloud') {
-                    sh "mkdir -p /home/jenkins/agent/workspace/${env.JOB_NAME}"
-                    sh "cp -R \$(pwd)/* /home/jenkins/agent/workspace/${env.JOB_NAME}/"
-                }
-                
-                dir("/home/jenkins/agent/workspace/${env.JOB_NAME}/${config.sourceFolderPath}") {
                     sh """
                         echo "Current working directory:"
                         pwd
-                        echo "\nFunction directory contents:"
+                        echo "\nDirectory contents:"
                         ls -la
-                        
-                        tar -cvzf ../${config.functionName}.tar.gz .
-                        cd ..
-                        
-                        if [ ! -s ${config.functionName}.tar.gz ]; then
-                            echo "Error: Created archive is empty"
-                            exit 1
-                        fi
-                        
-                        echo "\nContents of the archive:"
-                        tar -tvf ${config.functionName}.tar.gz
-                        
-                        echo "\nArchive file details:"
-                        ls -l ${config.functionName}.tar.gz
+                        echo "\nJenkins workspace:"
+                        echo \$WORKSPACE
+                        echo "\nWorkspace contents:"
+                        ls -la \$WORKSPACE
+                        echo "\nJob name:"
+                        echo \$JOB_NAME
+                        echo "\nFull job name:"
+                        echo \$JOB_BASE_NAME
                     """
+                }
+            }
+
+            stage('Prepare Function Archive') {
+                container('gcloud') {
+                    dir("\$WORKSPACE/${config.sourceFolderPath}") {
+                        sh """
+                            echo "Current working directory:"
+                            pwd
+                            echo "\nFunction directory contents:"
+                            ls -la
+                            
+                            tar -cvzf ../\${config.functionName}.tar.gz .
+                            cd ..
+                            
+                            if [ ! -s \${config.functionName}.tar.gz ]; then
+                                echo "Error: Created archive is empty"
+                                exit 1
+                            fi
+                            
+                            echo "\nContents of the archive:"
+                            tar -tvf \${config.functionName}.tar.gz
+                            
+                            echo "\nArchive file details:"
+                            ls -l \${config.functionName}.tar.gz
+                        """
+                    }
                 }
             }
 
@@ -56,9 +78,11 @@ def call(Map config) {
                         echo "Current working directory in gcloud container:"
                         pwd
                         echo "\nDirectory contents in gcloud container:"
-                        ls -la /home/jenkins/agent/workspace/${env.JOB_NAME}/
+                        ls -la
+                        echo "\nWorkspace contents:"
+                        ls -la \$WORKSPACE
                         echo "\nArchive file details:"
-                        ls -l /home/jenkins/agent/workspace/${env.JOB_NAME}/${config.functionName}.tar.gz || echo "Archive not found"
+                        ls -l \$WORKSPACE/\${config.functionName}.tar.gz || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
@@ -66,31 +90,31 @@ def call(Map config) {
 
                 stage("Upload Function Archive") {
                     sh """
-                        cd /home/jenkins/agent/workspace/${env.JOB_NAME}/
-                        gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
-                        echo "Function archive uploaded to ${config.gcsPath}"
-                        gcloud storage ls -l ${config.gcsPath}
+                        cd \$WORKSPACE
+                        gcloud storage cp \${config.functionName}.tar.gz \${config.gcsPath}
+                        echo "Function archive uploaded to \${config.gcsPath}"
+                        gcloud storage ls -l \${config.gcsPath}
                     """
                 }
 
-                stage("Deploy Cloud Function: ${config.functionName}") {
+                stage("Deploy Cloud Function: \${config.functionName}") {
                     def deployCommand = """
-                        gcloud functions deploy ${config.functionName} \
-                            --runtime ${config.runtime} \
-                            --region ${config.region} \
-                            --source ${config.gcsPath} \
-                            --service-account ${config.serviceAccountEmail} \
-                            --set-env-vars ${config.environmentVariables.collect { "$it.key=$it.value" }.join(',')} \
-                            ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \
-                            ${config.timeout ? "--timeout ${config.timeout}" : ''} \
-                            ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \
+                        gcloud functions deploy \${config.functionName} \\
+                            --runtime \${config.runtime} \\
+                            --region \${config.region} \\
+                            --source \${config.gcsPath} \\
+                            --service-account \${config.serviceAccountEmail} \\
+                            --set-env-vars \${config.environmentVariables.collect { "\$it.key=\$it.value" }.join(',')} \\
+                            \${config.entryPoint ? "--entry-point \${config.entryPoint}" : ''} \\
+                            \${config.timeout ? "--timeout \${config.timeout}" : ''} \\
+                            \${config.maxInstances ? "--max-instances \${config.maxInstances}" : ''} \\
                             --verbosity debug
                     """
 
                     if (config.triggerType == 'http') {
                         deployCommand += " --trigger-http"
                     } else if (config.triggerType == 'pubsub') {
-                        deployCommand += " --trigger-topic ${config.topicName}"
+                        deployCommand += " --trigger-topic \${config.topicName}"
                     }
 
                     sh deployCommand
