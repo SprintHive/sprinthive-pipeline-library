@@ -9,13 +9,18 @@ def call(config) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         targetNamespace = envInfo.deployStage
+        if (config.subModuleName != null) {
+            contextDirectory = "${env.WORKSPACE}/${config.subModuleName}"
+        } else {
+            contextDirectory = env.WORKSPACE
+        }
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
-
+        echo "Context directory is: ${contextDirectory}"
+        versionTag = "${getNewVersion{}}"
         stage('Build distribution') {
-            versionTag = getNewVersion{}
-
             container(name: "nodejs") {
+                versionTag = "${nodeAppVersion()}-${versionTag}"
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
