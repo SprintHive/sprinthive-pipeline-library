@@ -42,34 +42,40 @@ def call(Map config) {
                         echo ${env.JOB_NAME}
                         echo "\nFull job name:"
                         echo ${env.JOB_BASE_NAME}
+                        echo "\nSource folder contents:"
+                        ls -la /home/jenkins/agent/workspace/SprintHive/dev/build/temp-gcloud-function/${config.sourceFolderPath}
                     """
                 }
             }
 
             stage('Prepare Function Archive') {
                 container('gcloud') {
-                    dir("/home/jenkins/agent/${config.sourceFolderPath}") {
-                        sh """
-                            echo "Current working directory:"
-                            pwd
-                            echo "\nFunction directory contents:"
-                            ls -la
-                            
-                            tar -cvzf "../${config.functionName}.tar.gz" .
-                            cd ..
-                            
-                            if [ ! -s "${config.functionName}.tar.gz" ]; then
-                                echo "Error: Created archive is empty"
-                                exit 1
-                            fi
-                            
-                            echo "\nContents of the archive:"
-                            tar -tvf "${config.functionName}.tar.gz"
-                            
-                            echo "\nArchive file details:"
-                            ls -l "${config.functionName}.tar.gz"
-                        """
-                    }
+                    sh """
+                        cd /home/jenkins/agent/workspace/SprintHive/dev/build/temp-gcloud-function/${config.sourceFolderPath}
+                        echo "Current working directory:"
+                        pwd
+                        echo "\nFunction directory contents:"
+                        ls -la
+                        
+                        if [ -z "\$(ls -A)" ]; then
+                            echo "Error: Source directory is empty"
+                            exit 1
+                        fi
+                        
+                        tar -cvzf "/home/jenkins/agent/${config.functionName}.tar.gz" .
+                        cd /home/jenkins/agent
+                        
+                        if [ ! -s "${config.functionName}.tar.gz" ]; then
+                            echo "Error: Created archive is empty"
+                            exit 1
+                        fi
+                        
+                        echo "\nContents of the archive:"
+                        tar -tvf "${config.functionName}.tar.gz"
+                        
+                        echo "\nArchive file details:"
+                        ls -l "${config.functionName}.tar.gz"
+                    """
                 }
             }
 
