@@ -50,6 +50,8 @@ def call(Map config) {
               type: Directory
     ''') {
         node(podLabel) {
+            containerCopyOver(podLabel, 'gcloud', config.archiveFile, '/tmp/function.tar.gz')
+
             container('gcloud') {
                 stage("Verify Environment") {
                     sh """
@@ -57,10 +59,10 @@ def call(Map config) {
                         pwd
                         echo "\nDirectory contents in gcloud container:"
                         ls -la
-                        echo "\nWorkspace contents:"
-                        ls -la /home/jenkins/agent
-                        echo "\nFull directory structure in gcloud container:"
-                        find /home/jenkins/agent -name '${config.functionName}.tar.gz' || echo "Archive not found"
+                        echo "\nTemp directory contents:"
+                        ls -la /tmp
+                        echo "\nArchive file details:"
+                        ls -l /tmp/function.tar.gz || echo "Archive not found"
                         echo "\nGcloud version:"
                         gcloud version
                     """
@@ -68,11 +70,8 @@ def call(Map config) {
 
                 stage("Upload Function Archive") {
                     sh """
-                        echo "Attempting to copy file from: ${config.archiveFile}"
-                        echo "File exists check:"
-                        ls -l ${config.archiveFile} || echo "File not found"
-                        
-                        gcloud storage cp ${config.archiveFile} ${config.gcsPath}
+                        echo "Attempting to copy file from: /tmp/function.tar.gz"
+                        gcloud storage cp /tmp/function.tar.gz ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
                         gcloud storage ls -l ${config.gcsPath}
                     """
