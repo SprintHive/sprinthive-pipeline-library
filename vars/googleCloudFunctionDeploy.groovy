@@ -56,11 +56,18 @@ def call(Map config) {
                             } else {
                                 echo "Archive not found in workspace. Attempting to copy from artifacts..."
                                 
-                                // Use copyArtifacts step instead of CopyArtifact
-                                copyArtifacts(projectName: env.JOB_NAME, 
-                                            selector: specific("${env.BUILD_NUMBER}"), 
-                                            filter: archiveName, 
-                                            fingerprintArtifacts: true)
+                                try {
+                                    // Use copyArtifacts step instead of CopyArtifact
+                                    copyArtifacts(projectName: env.JOB_NAME, 
+                                                selector: specific("${env.BUILD_NUMBER}"), 
+                                                filter: archiveName, 
+                                                fingerprintArtifacts: true)
+
+                                    echo "Copying done, moving on"
+                                } catch (Exception e) {
+                                    echo "Error occurred while handling function archive: ${e.message}"
+                                    echo "Stack trace: ${e.stackTrace.join('\n')}"
+                                }
                             }
                             
                             // Check if the file now exists in the current directory
