@@ -43,7 +43,7 @@ def call(Map config) {
                 container('gcloud') {
                     script {
                         try {
-                            def archiveName = "${config.functionName}.tar.gz"
+                            def archiveName = "${config.functionName}.zip"
                             
                             echo "Debugging archive copying process"
                             echo "Archive name: ${archiveName}"
@@ -89,12 +89,12 @@ def call(Map config) {
             container('gcloud') {
                 stage("Upload Function Archive") {
                     sh """
-                        if [ ! -f "${config.functionName}.tar.gz" ]; then
+                        if [ ! -f "${config.functionName}.zip" ]; then
                             echo "Error: Archive file not found"
                             exit 1
                         fi
                         gcloud config set project ${config.projectId}
-                        gcloud storage cp ${config.functionName}.tar.gz ${config.gcsPath}
+                        gcloud storage cp ${config.functionName}.zip ${config.gcsPath}
                         echo "Function archive uploaded to ${config.gcsPath}"
                         gcloud storage ls -l ${config.gcsPath}
                     """
