@@ -101,9 +101,6 @@ def call(Map config) {
                 }
 
                 stage("Deploy Cloud Function: ${config.functionName}") {
-                    echo "Debug: config object = ${config}"
-                    echo "Debug: triggerType = ${config.triggerType}"
-                    
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \\
                             --runtime ${config.runtime} \\
@@ -118,12 +115,11 @@ def call(Map config) {
                     """
 
                     if (config.triggerType == 'http') {
-                        deployCommand += " --trigger-http"
+                        deployCommand += "\\ --trigger-http"
                     } else if (config.triggerType == 'pubsub') {
-                        deployCommand += " --trigger-topic ${config.topicName}"
+                        deployCommand += "\\ --trigger-topic ${config.topicName}"
                     }
 
-                    echo "Debug: Final deployCommand = ${deployCommand}"
                     sh deployCommand
                 }
 
