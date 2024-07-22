@@ -71,7 +71,7 @@ def call(Map config) {
                                 ls -la
                                 if [ -f "${archiveName}" ]; then
                                     echo "Contents of the archive:"
-                                    tar -tvf ${archiveName}
+                                    jar -tvf ${archiveName}
                                 else
                                     echo "Error: Archive file not found in current directory"
                                     exit 1
