@@ -1,6 +1,29 @@
 #!/usr/bin/groovy
 
 def call(Map config) {
+    stage('Checkout') {
+        checkout scm
+    }
+
+    // Prepare Function Archive
+    stage('Prepare Function Archive') {
+        def archiveName = "${config.functionName}.zip"
+        
+        sh """
+            cd ${env.WORKSPACE}/${config.functionName}
+            jar -cvf ../${archiveName} .
+            cd ..
+            if [ ! -s ${archiveName} ]; then
+                echo "Error: Created archive is empty"
+                exit 1
+            fi
+            echo "Contents of the archive:"
+            jar -tvf ${archiveName}
+        """
+        
+        archiveArtifacts artifacts: archiveName, fingerprint: true
+    }
+    
     def podLabel = "gcloud-${UUID.randomUUID().toString()}"
     
     podTemplate(
