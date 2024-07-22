@@ -45,32 +45,27 @@ def call(Map config) {
                         try {
                             def archiveName = "${config.functionName}.tar.gz"
                             
-                            // Print workspace information
+                            echo "Debugging archive copying process"
+                            echo "Archive name: ${archiveName}"
                             echo "Current workspace: ${env.WORKSPACE}"
+                            
                             sh "ls -la ${env.WORKSPACE}"
                             
-                            // Check if the archive exists in the workspace
-                            if (fileExists("${env.WORKSPACE}/${archiveName}")) {
-                                echo "Archive found in workspace. Copying to current directory..."
-                                sh "cp ${env.WORKSPACE}/${archiveName} ."
-                            } else {
-                                echo "Archive not found in workspace. Attempting to copy from artifacts..."
-                                
-                                try {
-                                    // Use copyArtifacts step instead of CopyArtifact
-                                    copyArtifacts(projectName: env.JOB_NAME, 
-                                                selector: specific("${env.BUILD_NUMBER}"), 
-                                                filter: archiveName, 
-                                                fingerprintArtifacts: true)
-
-                                    echo "Copying done, moving on"
-                                } catch (Exception e) {
-                                    echo "Error occurred while handling function archive: ${e.message}"
-                                    echo "Stack trace: ${e.stackTrace.join('\n')}"
-                                }
-                            }
+                            echo "Attempting to copy from artifacts..."
+                            echo "Job name: ${env.JOB_NAME}"
+                            echo "Build number: ${env.BUILD_NUMBER}"
                             
-                            // Check if the file now exists in the current directory
+                            // Use copyArtifacts step to retrieve the archive
+                            copyArtifacts(
+                                projectName: env.JOB_NAME, 
+                                selector: specific(env.BUILD_NUMBER), 
+                                filter: archiveName, 
+                                fingerprintArtifacts: true
+                            )
+                            
+                            sh "ls -la"  // Check if the artifact was copied successfully
+                            
+                            // Check if the file exists in the current directory
                             sh """
                                 echo "Current directory contents after copy attempt:"
                                 ls -la
