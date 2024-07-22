@@ -11,11 +11,11 @@ def call(config) {
         targetNamespace = envInfo.deployStage
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
-
+        echo "Context directory is: ${env.WORKSPACE}"
         stage('Build distribution') {
             versionTag = getNewVersion{}
-
             container(name: "nodejs") {
+                versionTag = "${nodeAppVersion()}-${versionTag}"
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
