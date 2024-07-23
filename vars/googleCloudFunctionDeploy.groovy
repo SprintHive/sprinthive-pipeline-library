@@ -137,8 +137,10 @@ def deployFunction(Map config) {
     def deployCommand = "gcloud functions deploy ${config.functionName}"
     
     if (config.generation == 'gen2') {
-        deployCommand += " --gen2 \\"
-        deployCommand += " --concurrency ${config.concurrency ? config.concurrency : 80} \\"
+        deployCommand += """ 
+            --gen2 \\
+            --concurrency ${config.concurrency ? config.concurrency : 80} \\
+        """
     } else {
         deploymentCommand += " \\"
     }
