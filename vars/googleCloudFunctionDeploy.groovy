@@ -2,6 +2,7 @@
 
 /**
  * Deploy a Google Cloud Function (HTTP or PubSub triggered)
+ * When using this remember to configure discarding artifacts so we don't hoard them
  *
  * CLI docs: https://cloud.google.com/sdk/gcloud/reference/functions/deploy
  *
@@ -20,6 +21,9 @@
  *   triggerType         : Type of trigger - 'http' or 'pubsub' (String, required)
  *   topicName           : PubSub topic name (required if triggerType is 'pubsub')
  *   generation          : Cloud Function generation - 'gen1' or 'gen2' (String, required)
+ *   memory              : Memory allocation for the function (String, optional)
+ *   concurrency         : Maximum number of concurrent requests (Integer, optional, gen2 only)
+ *   cpu                 : CPU allocation for the function (Integer, optional, gen2 only)
  */
 def call(Map config) {
     // Validate required parameters
@@ -137,6 +141,7 @@ def deployFunction(Map config) {
     def deployCommand = "gcloud functions deploy ${config.functionName}"
     
     if (config.generation == 'gen2') {
+        // Jenkins is very sensitive to indentation, so this snippet looks strange but it's correct
         deployCommand += """ --gen2 \\
         --concurrency ${config.concurrency ? config.concurrency : 1} \\
         --cpu ${config.cpu ? config.cpu : 1} \\"""
