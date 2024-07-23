@@ -134,7 +134,7 @@ def uploadArchive(Map config) {
 }
 
 def deployFunction(Map config) {
-    def deployCommand = "gcloud functions deploy ${config.functionName}"
+    def deployCommand = "gcloud functions deploy ${config.functionName} \\"
     
     if (config.generation == 'gen2') {
         deployCommand += " --gen2 \\"
