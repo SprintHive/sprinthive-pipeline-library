@@ -134,11 +134,13 @@ def uploadArchive(Map config) {
 }
 
 def deployFunction(Map config) {
-    def deployCommand = "gcloud functions deploy ${config.functionName} \\"
+    def deployCommand = "gcloud functions deploy ${config.functionName}"
     
     if (config.generation == 'gen2') {
         deployCommand += " --gen2 \\"
         deployCommand += " --concurrency ${config.concurrency ? config.concurrency : 80} \\"
+    } else {
+        deploymentCommand += " \\"
     }
     
     deployCommand += """
