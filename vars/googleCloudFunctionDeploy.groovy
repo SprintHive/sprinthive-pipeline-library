@@ -134,24 +134,21 @@ def uploadArchive(Map config) {
 }
 
 def deployFunction(Map config) {
-    def deployCommand = """
-        gcloud functions deploy ${config.functionName} \\
-    """
-
-    // Needs to be placed early
+    def deployCommand = "gcloud functions deploy ${config.functionName} \\"
+    
     if (config.generation == 'gen2') {
         deployCommand += "    --gen2 \\"
     }
-
-    deploymentCommand += """
-            --runtime ${config.runtime} \\
-            --region ${config.region} \\
-            --source ${config.gcsPath} \\
-            --service-account ${config.serviceAccountEmail} \\
-            --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
-            ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
-            ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
-            ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
+    
+    deployCommand += """
+        --runtime ${config.runtime} \\
+        --region ${config.region} \\
+        --source ${config.gcsPath} \\
+        --service-account ${config.serviceAccountEmail} \\
+        --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
+        ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
+        ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
+        ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
     """
 
     if (config.triggerType == 'http') {
@@ -160,5 +157,14 @@ def deployFunction(Map config) {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
-    sh deployCommand
+    // Execute the command and capture the output
+    def result = sh(script: deployCommand, returnStdout: true).trim()
+
+    // Check if the function was deployed as Gen 2
+    if (config.generation == 'gen2' && !result.contains("gen: 2")) {
+        error "Function was not deployed as Gen 2. Please check your project settings and gcloud version."
+    }
+
+    // Print the deployment result for logging
+    echo "Deployment result: ${result}"
 }
