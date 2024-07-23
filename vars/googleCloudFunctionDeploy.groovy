@@ -136,18 +136,19 @@ def uploadArchive(Map config) {
 def deployFunction(Map config) {
     def deployCommand = """
         gcloud functions deploy ${config.functionName} \\
+    """
+
+    // Needs to be placed early
+    if (config.generation == 'gen2') {
+        deployCommand += "    --gen2 \\"
+    }
+
+    deploymentCommand += """
             --runtime ${config.runtime} \\
             --region ${config.region} \\
             --source ${config.gcsPath} \\
             --service-account ${config.serviceAccountEmail} \\
             --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
-    """
-
-    if (config.generation == 'gen2') {
-        deployCommand = deployCommand.replaceFirst("gcloud functions deploy", "gcloud functions deploy --gen2")
-    }
-
-    deployCommand += """
             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
             ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
             ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
@@ -159,7 +160,5 @@ def deployFunction(Map config) {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
-    def result = sh(script: deployCommand, returnStdout: true).trim()
-
-    echo "Deployment result: ${result}"
+    sh deployCommand
 }
