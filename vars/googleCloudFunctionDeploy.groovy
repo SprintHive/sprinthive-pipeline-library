@@ -149,6 +149,9 @@ def deployFunction(Map config) {
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
         ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
         ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
+        ${config.memory ? "--memory=${config.memory}" : ''} \\
+        ${config.allowUnauthenticated ? "--allow-unauthenticated" : '--no-allow-unauthenticated'} \\
+        ${(config.generation == 'gen2' && config.concurrency) ? "--concurrency=${config.concurrency}" : ''} \\
     """
 
     if (config.triggerType == 'http') {
@@ -159,6 +162,6 @@ def deployFunction(Map config) {
 
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
-    // Print the deployment result for verfication
+    // Print the deployment result for verification
     echo "Deployment result: ${result}"
 }
