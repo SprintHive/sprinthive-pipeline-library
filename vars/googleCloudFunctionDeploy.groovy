@@ -154,6 +154,9 @@ def deployFunction(Map config) {
         ${(config.generation == 'gen2' && config.concurrency) ? "--concurrency=${config.concurrency}" : ''} \\
     """
 
+    // Print command for debugging
+    echo "Deploy command: ${deployCommand}"
+
     if (config.triggerType == 'http') {
         deployCommand += "    --trigger-http"
     } else if (config.triggerType == 'pubsub') {
