@@ -169,9 +169,6 @@ def deployFunction(Map config) {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
-    // Print command for debugging
-    echo "Deploy command: ${deployCommand}"
-
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
     // Print the deployment result for verification
