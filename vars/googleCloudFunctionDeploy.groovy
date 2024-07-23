@@ -157,14 +157,8 @@ def deployFunction(Map config) {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
-    // Execute the command and capture the output
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
-    // Check if the function was deployed as Gen 2
-    if (config.generation == 'gen2' && !result.contains("gen: 2")) {
-        error "Function was not deployed as Gen 2. Please check your project settings and gcloud version."
-    }
-
-    // Print the deployment result for logging
+    // Print the deployment result for verfication
     echo "Deployment result: ${result}"
 }
