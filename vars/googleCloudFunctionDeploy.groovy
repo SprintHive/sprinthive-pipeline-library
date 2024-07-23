@@ -5,7 +5,6 @@ def call(Map config) {
         checkout scm
     }
 
-    // Prepare Function Archive
     stage('Prepare Function Archive') {
         def archiveName = "${config.functionName}.zip"
         
@@ -17,8 +16,6 @@ def call(Map config) {
                 echo "Error: Created archive is empty"
                 exit 1
             fi
-            echo "Contents of the archive:"
-            jar -tvf ${archiveName}
         """
         
         archiveArtifacts artifacts: archiveName, fingerprint: true
@@ -45,40 +42,11 @@ def call(Map config) {
         """
     ) {
         node(podLabel) {
-            stage('Debug Environment') {
-                container('gcloud') {
-                    sh """
-                        echo "Current working directory:"
-                        pwd
-                        echo "\nDirectory contents:"
-                        ls -la
-                        echo "\nJenkins workspace:"
-                        echo ${env.WORKSPACE}
-                        echo "\nJob name:"
-                        echo ${env.JOB_NAME}
-                        echo "\nBuild number:"
-                        echo ${env.BUILD_NUMBER}
-                    """
-                }
-            }
-
             stage('Copy Function Archive') {
                 container('gcloud') {
                     script {
                         try {
                             def archiveName = "${config.functionName}.zip"
-                            
-                            echo "Debugging archive copying process"
-                            echo "Archive name: ${archiveName}"
-                            echo "Current workspace: ${env.WORKSPACE}"
-                            
-                            sh "ls -la ${env.WORKSPACE}"
-                            
-                            echo "Attempting to copy from artifacts..."
-                            echo "Job name: ${env.JOB_NAME}"
-                            echo "Build number: ${env.BUILD_NUMBER}"
-                            
-                            // Use copyArtifacts step to retrieve the archive
                             copyArtifacts(
                                 projectName: env.JOB_NAME, 
                                 selector: specific(env.BUILD_NUMBER), 
@@ -86,24 +54,14 @@ def call(Map config) {
                                 fingerprintArtifacts: true
                             )
                             
-                            sh "ls -la"  // Check if the artifact was copied successfully
-                            
-                            // Check if the file exists in the current directory
                             sh """
-                                echo "Current directory contents after copy attempt:"
-                                ls -la
-                                if [ -f "${archiveName}" ]; then
-                                    echo "Contents of the archive:"
-                                    jar -tvf ${archiveName}
-                                else
+                                if [ ! -f "${archiveName}" ]; then
                                     echo "Error: Archive file not found in current directory"
                                     exit 1
                                 fi
                             """
                         } catch (Exception e) {
-                            echo "Error occurred while handling function archive: ${e.message}"
-                            echo "Stack trace: ${e.stackTrace.join('\n')}"
-                            error "Failed to process function archive"
+                            error "Failed to process function archive: ${e.message}"
                         }
                     }
                 }
@@ -112,21 +70,12 @@ def call(Map config) {
             container('gcloud') {
                 stage("Upload Function Archive") {
                     sh """
-                        if [ ! -f "${config.functionName}.zip" ]; then
-                            echo "Error: Archive file not found"
-                            exit 1
-                        fi
                         gcloud config set project ${config.projectId}
                         gcloud storage cp ${config.functionName}.zip ${config.gcsPath}
-                        echo "Function archive uploaded to ${config.gcsPath}"
-                        gcloud storage ls -l ${config.gcsPath}
                     """
                 }
 
                 stage("Deploy Cloud Function: ${config.functionName}") {
-                    echo "Debug: config object = ${config}"
-                    echo "Debug: triggerType = ${config.triggerType}"
-
                     def deployCommand = """
                         gcloud functions deploy ${config.functionName} \\
                             --runtime ${config.runtime} \\
@@ -137,7 +86,6 @@ def call(Map config) {
                             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
                             ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
                             ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
-                            --verbosity debug \\
                     """
 
                     if (config.triggerType == 'http') {
@@ -146,20 +94,7 @@ def call(Map config) {
                         deployCommand += "    --trigger-topic ${config.topicName}"
                     }
 
-                    echo "Debug: Final deployCommand = ${deployCommand}"
                     sh deployCommand
-                }
-
-                if (config.triggerType == 'pubsub') {
-                    stage("Create Pub/Sub Topic and Cloud Scheduler Job") {
-                        sh """
-                            gcloud scheduler jobs create pubsub "${config.functionName}-scheduler" \\
-                                --schedule '${config.schedule}' \\
-                                --topic "${config.topicName}" \\
-                                --message-body '${config.pubsubTargetData}' \\
-                                --time-zone '${config.timeZone}' || true
-                        """
-                    }
                 }
             }
         }
