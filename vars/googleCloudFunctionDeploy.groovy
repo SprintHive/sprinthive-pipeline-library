@@ -151,7 +151,7 @@ def deployFunction(Map config) {
         ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
         ${config.memory ? "--memory=${config.memory}" : ''} \\
         ${config.allowUnauthenticated ? "--allow-unauthenticated" : '--no-allow-unauthenticated'} \\
-        ${(config.generation == 'gen2' && config.concurrency) ? "--concurrency=${config.concurrency}" : ''} \\
+        ${(config.generation == 'gen2' && config.concurrency) ? "--concurrency ${config.concurrency} \\" : ''}
     """
 
     // Print command for debugging
