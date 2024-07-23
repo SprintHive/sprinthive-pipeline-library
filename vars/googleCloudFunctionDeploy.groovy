@@ -138,6 +138,7 @@ def deployFunction(Map config) {
     
     if (config.generation == 'gen2') {
         deployCommand += " --gen2 \\"
+        deployCommand += " --concurrency ${config.concurrency ? config.concurrency : 80} \\"
     }
     
     deployCommand += """
@@ -151,17 +152,16 @@ def deployFunction(Map config) {
         ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
         ${config.memory ? "--memory=${config.memory}" : ''} \\
         ${config.allowUnauthenticated ? "--allow-unauthenticated" : '--no-allow-unauthenticated'} \\
-        ${(config.generation == 'gen2' && config.concurrency) ? "--concurrency ${config.concurrency} \\" : ''}
     """
-
-    // Print command for debugging
-    echo "Deploy command: ${deployCommand}"
 
     if (config.triggerType == 'http') {
         deployCommand += "    --trigger-http"
     } else if (config.triggerType == 'pubsub') {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
+
+    // Print command for debugging
+    echo "Deploy command: ${deployCommand}"
 
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
