@@ -139,8 +139,7 @@ def deployFunction(Map config) {
     if (config.generation == 'gen2') {
         deployCommand += """ --gen2 \\
         --concurrency ${config.concurrency ? config.concurrency : 1} \\
-        --cpu ${config.cpu ? config.cpu : 1}"
-        """
+        --cpu ${config.cpu ? config.cpu : 1} \\"""
     } else {
         // Have to explicitly set since gen2 is becomming the default
         deployCommand += " --no-gen2 \\"
