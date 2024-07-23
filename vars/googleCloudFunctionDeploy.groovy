@@ -1,23 +1,25 @@
 #!/usr/bin/groovy
 
 /**
- * Deploy a Google Cloud Function (HTTP or PubSub triggered) using Jenkins pipeline.
+ * Deploy a Google Cloud Function (HTTP or PubSub triggered)
+ *
+ * CLI docs: https://cloud.google.com/sdk/gcloud/reference/functions/deploy
  *
  * @param config A map containing configuration parameters for the function deployment:
- *   - functionName: Name of the Cloud Function (String, required)
- *   - projectId: Google Cloud Project ID (String, required)
- *       - make sure the project has Jenkins worker as a principal (currently for qa and prod)
- *   - gcsPath: Google Cloud Storage path for the function archive (String, required)
- *   - runtime: Runtime for the Cloud Function (String, required)
- *   - region: Deployment region (String, required)
- *   - serviceAccountEmail: Service account email for the function (String, required)
- *   - environmentVariables: Map of environment variables for the function (Map, required)
- *   - entryPoint: Entry point for the function (String, optional)
- *   - timeout: Function timeout (String, optional)
- *   - maxInstances: Maximum number of function instances (Integer, optional)
- *   - triggerType: Type of trigger - 'http' or 'pubsub' (String, required)
- *   - topicName: PubSub topic name (required if triggerType is 'pubsub')
- *   - generation: Cloud Function generation - 'gen1' or 'gen2' (String, required)
+ *   functionName        : Name of the Cloud Function (String, required)
+ *   projectId           : Google Cloud Project ID (String, required)
+ *                         - make sure the project has Jenkins worker as a principal (currently for qa and prod)
+ *   gcsPath             : Google Cloud Storage path for the function archive (String, required)
+ *   runtime             : Runtime for the Cloud Function (String, required)
+ *   region              : Deployment region (String, required)
+ *   serviceAccountEmail : Service account email for the function (String, required)
+ *   environmentVariables: Map of environment variables for the function (Map, required)
+ *   entryPoint          : Entry point for the function (String, optional)
+ *   timeout             : Function timeout (String, optional)
+ *   maxInstances        : Maximum number of function instances (Integer, optional)
+ *   triggerType         : Type of trigger - 'http' or 'pubsub' (String, required)
+ *   topicName           : PubSub topic name (required if triggerType is 'pubsub')
+ *   generation          : Cloud Function generation - 'gen1' or 'gen2' (String, required)
  */
 def call(Map config) {
     // Validate required parameters
@@ -139,6 +141,13 @@ def deployFunction(Map config) {
             --source ${config.gcsPath} \\
             --service-account ${config.serviceAccountEmail} \\
             --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
+    """
+
+    if (config.generation == 'gen2') {
+        deployCommand = deployCommand.replaceFirst("gcloud functions deploy", "gcloud functions deploy --gen2")
+    }
+
+    deployCommand += """
             ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
             ${config.timeout ? "--timeout ${config.timeout}" : ''} \\
             ${config.maxInstances ? "--max-instances ${config.maxInstances}" : ''} \\
@@ -150,5 +159,7 @@ def deployFunction(Map config) {
         deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
-    sh deployCommand
+    def result = sh(script: deployCommand, returnStdout: true).trim()
+
+    echo "Deployment result: ${result}"
 }
