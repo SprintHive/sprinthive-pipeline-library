@@ -28,13 +28,19 @@ def call(config) {
   if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
     cdNode {
       for (namespaceTest in config.namespacesTest) {
-        stage("Helm Deploy: $namespaceTest") {
-          helmDeploy([
-                  releaseName          : config.application,
-                  namespace            : namespaceTest,
-                  imageTag             : params.imageTag,
-                  helmfileRepoOverride : config.helmfileRepoOverride
-          ])
+        stage("Helm Deploy: $namespaceTest.namespace") {
+          def chartEnv = namespaceTest.chartOverride
+          if (!chartEnv) {
+            chartEnv = namespaceTest.namespace
+          }
+          withEnv(["CHART_ENVIRONMENT=${chartEnv}"]) {
+            helmDeploy([
+                    releaseName          : config.application,
+                    namespace            : namespaceTest.namespace,
+                    imageTag             : params.imageTag,
+                    helmfileRepoOverride : config.helmfileRepoOverride
+            ])
+          }
         }
       }
     }
