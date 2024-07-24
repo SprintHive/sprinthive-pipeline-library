@@ -42,10 +42,6 @@ def call(Map config) {
         error "Invalid generation specified. Must be 'gen1' or 'gen2'."
     }
 
-    // stage('Checkout') {
-    //     checkout scm
-    // }
-
     stage('Prepare Function Archive') {
         prepareArchive(config.functionName)
     }
