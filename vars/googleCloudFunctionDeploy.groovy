@@ -42,9 +42,9 @@ def call(Map config) {
         error "Invalid generation specified. Must be 'gen1' or 'gen2'."
     }
 
-    stage('Checkout') {
-        checkout scm
-    }
+    // stage('Checkout') {
+    //     checkout scm
+    // }
 
     stage('Prepare Function Archive') {
         prepareArchive(config.functionName)
@@ -146,7 +146,7 @@ def deployFunction(Map config) {
         --concurrency ${config.concurrency ? config.concurrency : 1} \\
         --cpu ${config.cpu ? config.cpu : 1} \\"""
     } else {
-        // Have to explicitly set since gen2 is becomming the default
+        // Have to explicitly set since gen2 is becoming the default
         deployCommand += " --no-gen2 \\"
     }
     
