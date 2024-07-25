@@ -176,52 +176,8 @@ def deployFunction(Map config) {
     def jsonSlurper = new JsonSlurper()
     def jsonResult = jsonSlurper.parseText(result)
 
-    // Create and archive URL artifact if it's an HTTP function
+    // Print the URL only if it's an HTTP function
     if (config.triggerType == 'http' && jsonResult.url) {
         echo "Function URL: ${jsonResult.url}"
-        createUrlArtifact(config.functionName, jsonResult.url)
     }
-}
-
-def createUrlArtifact(String functionName, def urlOrJson) {
-    echo "Entering createUrlArtifact method"
-    def artifactFileName = "${functionName}_url.txt"
-    def url
-
-    // Determine if we received a JSON object or a string URL
-    if (urlOrJson instanceof groovy.json.internal.LazyMap) {
-        echo "Received JSON object, extracting URL"
-        url = urlOrJson.url
-    } else if (urlOrJson instanceof String) {
-        echo "Received string URL"
-        url = urlOrJson
-    } else {
-        echo "Unexpected type received: ${urlOrJson.getClass()}"
-        throw new IllegalArgumentException("Expected String or JSON object, but got: ${urlOrJson.getClass()}")
-    }
-
-    if (!url) {
-        echo "Error: URL is null or empty"
-        throw new IllegalArgumentException("URL is null or empty")
-    }
-
-    echo "Writing URL to file: ${artifactFileName}"
-    try {
-        writeFile file: artifactFileName, text: url
-        echo "File written successfully"
-    } catch (Exception e) {
-        echo "Error writing URL to file: ${e.message}"
-        throw e
-    }
-    
-    echo "Archiving artifact: ${artifactFileName}"
-    try {
-        archiveArtifacts artifacts: artifactFileName, fingerprint: true
-        echo "Artifact archived successfully"
-    } catch (Exception e) {
-        echo "Error archiving artifact: ${e.message}"
-        throw e
-    }
-    
-    echo "URL artifact created and archived: ${artifactFileName}"
 }
