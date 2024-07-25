@@ -1,5 +1,7 @@
 #!/usr/bin/groovy
 
+import groovy.json.JsonSlurper
+
 /**
  * Deploy a Google Cloud Function (HTTP or PubSub triggered)
  * When using this remember to configure discarding artifacts so we don't hoard them
@@ -170,11 +172,9 @@ def deployFunction(Map config) {
 
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
-    // Print the deployment result for verification
-    echo "Deployment result: ${result}"
-
     // Parse the JSON result
-    def jsonResult = readJSON text: result
+    def jsonSlurper = new JsonSlurper()
+    def jsonResult = jsonSlurper.parseText(result)
 
     // Print the URL only if it's an HTTP function
     if (config.triggerType == 'http' && jsonResult.url) {
