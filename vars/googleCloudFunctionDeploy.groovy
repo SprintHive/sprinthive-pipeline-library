@@ -172,4 +172,12 @@ def deployFunction(Map config) {
 
     // Print the deployment result for verification
     echo "Deployment result: ${result}"
+
+    // Parse the JSON result
+    def jsonResult = readJSON text: result
+
+    // Print the URL only if it's an HTTP function
+    if (config.triggerType == 'http' && jsonResult.url) {
+        echo "Function URL: ${jsonResult.url}"
+    }
 }
