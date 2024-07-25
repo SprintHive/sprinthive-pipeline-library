@@ -1,9 +1,10 @@
 #!/usr/bin/groovy
+import groovy.json.JsonSlurperClassic
 
 /**
  * @param config.application: The application being deployed
  * @param config.integrationTest: (Optional) The integration test configuration (fields: enabled, repository, branch, envVars). If set and enabled, this will run the integration tests prior to deploying past test environments.
- * @param config.namespacesTest: (Optional) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
+ * @param config.namespacesTest: (Optional, JSON String) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
@@ -25,18 +26,19 @@ def call(config) {
     println(params.changeLog)
   }
 
-  if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
+  def namespacesTestParsed = parseJson(config.namespacesTest)
+  if (namespacesTestParsed != null && namespacesTestParsed.size() > 0) {
     cdNode {
-      for (namespaceTest in config.namespacesTest) {
-        stage("Helm Deploy: $namespaceTest.namespace") {
-          def chartEnv = namespaceTest.chartOverride
+      namespacesTestParsed.each { item ->
+        stage("Helm Deploy: ${item.namespace}") {
+          def chartEnv = item.chartOverride
           if (!chartEnv) {
-            chartEnv = namespaceTest.namespace
+            chartEnv = item.namespace
           }
           withEnv(["CHART_ENVIRONMENT=${chartEnv}"]) {
             helmDeploy([
                     releaseName          : config.application,
-                    namespace            : namespaceTest.namespace,
+                    namespace            : item.namespace,
                     imageTag             : params.imageTag,
                     helmfileRepoOverride : config.helmfileRepoOverride
             ])
@@ -130,4 +132,10 @@ def call(config) {
       }
     }
   }
+}
+
+@NonCPS
+def parseJson(String jsonString) {
+  def jsonSlurper = new JsonSlurperClassic()
+  return jsonSlurper.parseText(jsonString)
 }
