@@ -162,10 +162,25 @@ def deployFunction(Map config) {
     if (config.triggerType == 'http') {
         deployCommand += "    --trigger-http"
     } else if (config.triggerType == 'pubsub') {
-        deployCommand += "    --trigger-topic ${config.topicName}"
+        deployCommand += "    --trigger-topic ${config.topicName} \\"
     }
 
+    // Add --format=json to get the output in JSON format
+    deployCommand += "    --format=json"
+
     def result = sh(script: deployCommand, returnStdout: true).trim()
+
+    // Extract and print the function URL if it's an HTTP-triggered function
+    if (config.triggerType == 'http') {
+        def functionUrl = deploymentInfo.httpsTrigger?.url
+        if (functionUrl) {
+            echo "Function URL: ${functionUrl}"
+        } else {
+            echo "Function URL not found in deployment output."
+        }
+    } else {
+        echo "Function deployed successfully (non-HTTP trigger)"
+    }
 
     // Print the deployment result for verification
     echo "Deployment result: ${result}"
