@@ -184,13 +184,26 @@ def deployFunction(Map config) {
 }
 
 def createUrlArtifact(String functionName, String url) {
+    echo "Entering createUrlArtifact method"
     def artifactFileName = "${functionName}_url.txt"
     
-    // Write URL to a file
-    writeFile file: artifactFileName, text: url
+    echo "Writing URL to file: ${artifactFileName}"
+    try {
+        writeFile file: artifactFileName, text: url
+        echo "File written successfully"
+    } catch (Exception e) {
+        echo "Error writing URL to file: ${e.message}"
+        throw e
+    }
     
-    // Archive the file as an artifact
-    archiveArtifacts artifacts: artifactFileName, fingerprint: true
+    echo "Archiving artifact: ${artifactFileName}"
+    try {
+        archiveArtifacts artifacts: artifactFileName, fingerprint: true
+        echo "Artifact archived successfully"
+    } catch (Exception e) {
+        echo "Error archiving artifact: ${e.message}"
+        throw e
+    }
     
     echo "URL artifact created and archived: ${artifactFileName}"
 }
