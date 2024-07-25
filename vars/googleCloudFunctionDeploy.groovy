@@ -176,8 +176,21 @@ def deployFunction(Map config) {
     def jsonSlurper = new JsonSlurper()
     def jsonResult = jsonSlurper.parseText(result)
 
-    // Print the URL only if it's an HTTP function
+    // Create and archive URL artifact if it's an HTTP function
     if (config.triggerType == 'http' && jsonResult.url) {
         echo "Function URL: ${jsonResult.url}"
+        createUrlArtifact(config.functionName, jsonResult.url)
     }
+}
+
+def createUrlArtifact(String functionName, String url) {
+    def artifactFileName = "${functionName}_url.txt"
+    
+    // Write URL to a file
+    writeFile file: artifactFileName, text: url
+    
+    // Archive the file as an artifact
+    archiveArtifacts artifacts: artifactFileName, fingerprint: true
+    
+    echo "URL artifact created and archived: ${artifactFileName}"
 }
