@@ -162,11 +162,11 @@ def deployFunction(Map config) {
     if (config.triggerType == 'http') {
         deployCommand += "    --trigger-http"
     } else if (config.triggerType == 'pubsub') {
-        deployCommand += "    --trigger-topic ${config.topicName} \\"
+        deployCommand += "    --trigger-topic ${config.topicName}"
     }
 
     // Add --format=json to get the output in JSON format
-    deployCommand += "    --format=json"
+    deployCommand += " --format=json"
 
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
