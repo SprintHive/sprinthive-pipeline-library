@@ -170,6 +170,10 @@ def deployFunction(Map config) {
 
     def result = sh(script: deployCommand, returnStdout: true).trim()
 
+    // Parse the JSON result
+    def jsonSlurper = new groovy.json.JsonSlurper()
+    def deploymentInfo = jsonSlurper.parseText(result)
+
     // Extract and print the function URL if it's an HTTP-triggered function
     if (config.triggerType == 'http') {
         def functionUrl = deploymentInfo.httpsTrigger?.url
