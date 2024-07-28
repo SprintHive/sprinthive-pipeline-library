@@ -30,7 +30,7 @@ def call(config) {
               releaseName                : config.application,
               namespace                  : config.namespace,
               imageTag                   : config.imageTag,
-              helmfileRepoOverride       : config.helmfileRepoOverride
+              helmfileRepoOverride       : config.helmfileRepoOverride,
               helmfileRepoBranchOverride : config.helmfileRepoBranchOverride
       ])
     }
