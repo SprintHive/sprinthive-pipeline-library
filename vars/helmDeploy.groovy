@@ -13,6 +13,13 @@ def call(config) {
         helmfileRepo = "https://bitbucket.org/sprinthive/service-charts.git"
     }
 
+    def helmfileRepoBranch
+    if (config.helmfileRepoBranchOverride != null) {
+      helmfileRepoBranch = config.helmfileRepoBranchOverride
+    } else {
+      helmfileRepoBranch = "main"
+    }
+
     def chartEnv = env.CHART_ENVIRONMENT
     if (!chartEnv) {
         chartEnv = config.namespace
@@ -21,7 +28,7 @@ def call(config) {
 
     checkout([
             $class: 'GitSCM',
-            branches: [[name: "main"]],
+            branches: [[name: helmfileRepoBranch]],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: helmfileRepo]]
     ])
 
