@@ -10,9 +10,10 @@ import groovy.json.JsonSlurper
  *
  * @param config A map containing configuration parameters for the function deployment:
  *   functionName        : Name of the Cloud Function (String, required)
- *   projectId           : Google Cloud Project ID (String, required)
+ *   branchProjectIdMap  : Branch - Google Cloud Project ID Map (Map<String, String>, required)
  *                         - make sure the project has Jenkins worker as a principal (currently for qa and prod)
  *   gcsPath             : Google Cloud Storage path for the function archive (String, required)
+ *                          - internally prefixed with a project ID to get object URI (e.g., gs://<projectId>-<gcsPath>)
  *   runtime             : Runtime for the Cloud Function (String, required)
  *   region              : Deployment region (String, required)
  *   serviceAccountEmail : Service account email for the function (String, required)
@@ -29,7 +30,7 @@ import groovy.json.JsonSlurper
  */
 def call(Map config) {
     // Validate required parameters
-    def requiredParams = ['functionName', 'projectId', 'gcsPath', 'runtime', 'region', 'serviceAccountEmail', 'environmentVariables', 'triggerType', 'generation']
+    def requiredParams = ['functionName', 'branchProjectIdMap', 'gcsPath', 'runtime', 'region', 'serviceAccountEmail', 'environmentVariables', 'triggerType', 'generation']
     requiredParams.each { param ->
         if (!config.containsKey(param)) {
             error "Missing required parameter: ${param}"
@@ -130,8 +131,8 @@ def copyArchive(String functionName) {
 
 def uploadArchive(Map config) {
     sh """
-        gcloud config set project ${config.projectId}
-        gcloud storage cp ${config.functionName}.zip ${config.gcsPath}
+        gcloud config set project ${getProjectId(config)}
+        gcloud storage cp ${config.functionName}.zip ${getGcsUri(config)}
     """
 }
 
@@ -151,7 +152,7 @@ def deployFunction(Map config) {
     deployCommand += """
         --runtime ${config.runtime} \\
         --region ${config.region} \\
-        --source ${config.gcsPath} \\
+        --source ${getGcsUri(config)} \\
         --service-account ${config.serviceAccountEmail} \\
         --set-env-vars ${config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',')} \\
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
@@ -180,4 +181,22 @@ def deployFunction(Map config) {
     if (config.triggerType == 'http' && jsonResult.url) {
         echo "Function URL: ${jsonResult.url}"
     }
+}
+
+def getGcsUri(Map config) {
+    if (!config.containsKey("gcsPath")) {
+        error "Missing required parameter: gcsPath"
+    }
+    return "gs://${getProjectId(config)}-${config.gcsPath}"
+}
+
+def getProjectId(Map config) {
+    def scmInfo = checkout scm
+    def envInfo = environmentInfo(scmInfo)
+    def branchProjectIdMap = config.branchProjectIdMap as Map
+    if (!branchProjectIdMap.containsKey("${envInfo.branch}")) {
+        error "Missing required projectId value ${envInfo.branch} in branchProjectIdMap"
+    }
+
+    return branchProjectIdMap.get("${envInfo.branch}")
 }
