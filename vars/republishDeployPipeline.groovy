@@ -2,7 +2,7 @@
 
 /**
  * @param config.application: The application being deployed
- * @param config.integrationTest: (Optional) The integration test configuration (fields: enabled, repository, branch, envVars, deploy, chart).
+ * @param config.integrationTest: (Optional) The integration test configuration (fields: runTest, repository, branch, envVars, deploy, chart).
   * If set and enabled, this will run the integration tests prior to deploying past test environments.
  * @param config.namespacesTest: (Optional) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
@@ -61,7 +61,7 @@ def call(config) {
         }
     }
 
-    if (config.integrationTest.enabled) {
+    if (config.integrationTest.runTest) {
         stage("Integration test") {
           node {
             checkout([
