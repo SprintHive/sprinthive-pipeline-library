@@ -3,7 +3,6 @@
 /**
  * @param config.application: The application being deployed
  * @param config.integrationTest: (Optional) The integration test configuration (fields: runTest, repository, branch, envVars, deploy, chart).
-  * If set and enabled, this will run the integration tests prior to deploying past test environments.
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
