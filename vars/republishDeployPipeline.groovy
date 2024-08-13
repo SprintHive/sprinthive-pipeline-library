@@ -4,7 +4,6 @@
  * @param config.application: The application being deployed
  * @param config.integrationTest: (Optional) The integration test configuration (fields: runTest, repository, branch, envVars, deploy, chart).
   * If set and enabled, this will run the integration tests prior to deploying past test environments.
- * @param config.namespacesTest: (Optional) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
@@ -24,21 +23,6 @@ def call(config) {
   if (params.changeLog != null && !params.changeLog.isEmpty()) {
     println("Change log:")
     println(params.changeLog)
-  }
-
-  if (config.namespacesTest != null && config.namespacesTest.size() > 0) {
-    cdNode {
-      for (namespaceTest in config.namespacesTest) {
-        stage("Helm Deploy: $namespaceTest") {
-          helmDeploy([
-                  releaseName          : config.application,
-                  namespace            : namespaceTest,
-                  imageTag             : params.imageTag,
-                  helmfileRepoOverride : config.helmfileRepoOverride
-          ])
-        }
-      }
-    }
   }
 
   if (config.integrationTest != null) {
