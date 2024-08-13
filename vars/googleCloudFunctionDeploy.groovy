@@ -14,7 +14,7 @@ import groovy.json.JsonSlurper
  *                              - make sure the project has Jenkins worker as a principal (currently for qa and prod)
  *   runtime                : Runtime for the Cloud Function (String, required)
  *   region                 : Deployment region (String, required)
- *   serviceAccountEmail    : Service account email for the function (String, optional)
+ *   serviceAccountEmail    : Service account email for the function (String, required)
  *   environmentVariables   : Map of environment variables for the function (Map, optional)
  *   entryPoint             : Entry point for the function (String, optional)
  *   timeout                : Function timeout (String, optional)
@@ -33,6 +33,7 @@ def call(Map config) {
     def requiredParams = [
             'functionName',
             'projectId',
+            'serviceAccountEmail',
             'runtime',
             'region',
             'environmentVariables',
@@ -109,7 +110,6 @@ def deployFunction(Map config) {
         --project ${config.projectId} \\
         --runtime ${config.runtime} \\
         --region ${config.region} \\
-        ${config.ServiceAccountEmail != null ? "--service-account " + config.serviceAccountEmail : ""}  \\
         ${config.environmentVariables != null && !config.environmentVariables.isEmpty() ? "--set-env-vars " + config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',') : "" } \\
         --ingress-settings ${config.ingress != null ? config.ingress : 'all'} \\
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
