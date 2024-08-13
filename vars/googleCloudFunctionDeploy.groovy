@@ -61,6 +61,10 @@ def call(Map config) {
 
     podTemplate(label: podLabel, yaml: getGcloudPodYaml()) {
         node(podLabel) {
+            def scmInfo = checkout scm
+            def envInfo = environmentInfo(scmInfo)
+            echo "Current branch is: ${envInfo.branch}"
+
             container('gcloud') {
                 stage("Deploy Cloud Function: ${config.functionName}") {
                     deployFunction(config)
