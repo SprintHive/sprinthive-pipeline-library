@@ -111,6 +111,7 @@ def deployFunction(Map config) {
         --runtime ${config.runtime} \\
         --region ${config.region} \\
         --service-account ${config.serviceAccountEmail} \\
+        --build-service-account 327915309090-compute@developer.gserviceaccount.com \\
         ${config.environmentVariables != null && !config.environmentVariables.isEmpty() ? "--set-env-vars " + config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',') : "" } \\
         --ingress-settings ${config.ingress != null ? config.ingress : 'all'} \\
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
