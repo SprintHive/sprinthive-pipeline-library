@@ -94,6 +94,8 @@ def getGcloudPodYaml() {
 }
 
 def deployFunction(Map config) {
+    sh "gcloud builds get-default-service-account"
+
     def deployCommand = "gcloud functions deploy ${config.functionName}"
 
     if (config.generation == 'gen2') {
