@@ -1,10 +1,8 @@
 #!/usr/bin/groovy
-import groovy.json.JsonSlurperClassic
 
 /**
  * @param config.application: The application being deployed
- * @param config.integrationTest: (Optional) The integration test configuration (fields: enabled, repository, branch, envVars). If set and enabled, this will run the integration tests prior to deploying past test environments.
- * @param config.namespacesTest: (Optional, JSON String) if skipDeploy is true. The kubernetes test namespaces into which the application should be deployed without release approval.
+ * @param config.integrationTest: (Optional) The integration test configuration (fields: runTest, repository, branch, envVars, deploy, chart).
  * @param config.namespacesPreProd: (Optional) if skipDeploy is true. The kubernetes pre-prod namespaces into which the application should be deployed prior to full production rollout.
  * @param config.namespacesProd: (Optional) if skipDeploy is true. The kubernetes prod namespace into which the application should be deployed only with manual approval.
  * @param config.gcrCredentialsId: The credentials id for a GCR Service Account that can read from the source GCR \
@@ -26,59 +24,58 @@ def call(config) {
     println(params.changeLog)
   }
 
-  def namespacesTestParsed = parseJson(config.namespacesTest)
-  if (namespacesTestParsed != null && namespacesTestParsed.size() > 0) {
-    cdNode {
-      namespacesTestParsed.each { item ->
-        stage("Helm Deploy: ${item.namespace}") {
-          def chartEnv = item.chartOverride
-          if (!chartEnv) {
-            chartEnv = item.namespace
-          }
-          withEnv(["CHART_ENVIRONMENT=${chartEnv}"]) {
-            helmDeploy([
-                    releaseName          : config.application,
-                    namespace            : item.namespace,
-                    imageTag             : params.imageTag,
-                    helmfileRepoOverride : config.helmfileRepoOverride
-            ])
-          }
+  if (config.integrationTest != null) {
+    if (config.integrationTest.deploy) {
+        cdNode {
+            stage("Helm Deploy: integ-test") {
+              def chartEnv = config.integrationTest.chart
+              if (!chartEnv) {
+                chartEnv = "integ-test"
+              }
+              withEnv(["CHART_ENVIRONMENT=${chartEnv}"]) {
+                helmDeploy([
+                        releaseName          : config.application,
+                        namespace            : "integ-test",
+                        imageTag             : params.imageTag,
+                        helmfileRepoOverride : config.helmfileRepoOverride
+                ])
+              }
+            }
         }
-      }
     }
-  }
 
-  if (config.integrationTest != null && config.integrationTest.enabled) {
-    stage("Integration test") {
-      node {
-        checkout([
-            $class: 'GitSCM',
-            branches: [[name: config.integrationTest.branch]],
-            extensions: [[$class: 'GitLFSPull']],
-            userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
-        ])
-        podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
-        podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
-        podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
-          node(podLabel) {
+    if (config.integrationTest.runTest) {
+        stage("Integration test") {
+          node {
             checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: config.integrationTest.branch]],
-                    extensions: [[$class: 'GitLFSPull']],
-                    userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
+                $class: 'GitSCM',
+                branches: [[name: config.integrationTest.branch]],
+                extensions: [[$class: 'GitLFSPull']],
+                userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
             ])
-            container('test') {
-              exports = []
-              if (config.integrationTest.envVars != null) {
-                config.integrationTest.envVars.each { envVar ->
-                  exports.add("${envVar.key}=${envVar.value}")
+            podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
+            podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
+            podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
+              node(podLabel) {
+                checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: config.integrationTest.branch]],
+                        extensions: [[$class: 'GitLFSPull']],
+                        userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
+                ])
+                container('test') {
+                  exports = []
+                  if (config.integrationTest.envVars != null) {
+                    config.integrationTest.envVars.each { envVar ->
+                      exports.add("${envVar.key}=${envVar.value}")
+                    }
+                  }
+                  sh "${exports.join(" ")} ./jenkins/integrationTest.sh"
                 }
               }
-              sh "${exports.join(" ")} ./jenkins/integrationTest.sh"
             }
           }
         }
-      }
     }
   }
 
@@ -132,10 +129,4 @@ def call(config) {
       }
     }
   }
-}
-
-@NonCPS
-def parseJson(String jsonString) {
-  def jsonSlurper = new JsonSlurperClassic()
-  return jsonSlurper.parseText(jsonString)
 }
