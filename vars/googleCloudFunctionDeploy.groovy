@@ -110,8 +110,6 @@ def deployFunction(Map config) {
         --project ${config.projectId} \\
         --runtime ${config.runtime} \\
         --region ${config.region} \\
-        --service-account ${config.serviceAccountEmail} \\
-        --build-service-account ${config.serviceAccountEmail} \\
         --run-service-account ${config.serviceAccountEmail} \\
         ${config.environmentVariables != null && !config.environmentVariables.isEmpty() ? "--set-env-vars " + config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',') : "" } \\
         --ingress-settings ${config.ingress != null ? config.ingress : 'all'} \\
