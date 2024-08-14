@@ -94,6 +94,7 @@ def getGcloudPodYaml() {
 }
 
 def deployFunction(Map config) {
+    sh "gcloud iam service-accounts add-iam-policy-binding projects/-/serviceAccounts/sh-qa-00-cifd@sh-qa-00.iam.gserviceaccount.com --member serviceAccount:projects/327915309090/serviceAccounts/327915309090@cloudbuild.gserviceaccount.com --role roles/iam.serviceAccountUser"
     sh "gcloud builds get-default-service-account"
 
     def deployCommand = "gcloud functions deploy ${config.functionName}"
