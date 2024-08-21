@@ -91,7 +91,6 @@ def getGcloudPodYaml() {
 def deployFunction(Map config) {
     def deployCommand = "gcloud functions deploy ${config.functionName}"
 
-
     // Jenkins is very sensitive to indentation, so this snippet looks strange but it's correct
     deployCommand += """ --gen2 \\
     --concurrency ${config.concurrency ? config.concurrency : 1} \\
