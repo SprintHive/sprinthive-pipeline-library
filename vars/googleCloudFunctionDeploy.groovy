@@ -21,12 +21,12 @@ import groovy.json.JsonSlurper
  *   maxInstances           : Maximum number of function instances (Integer, optional)
  *   triggerType            : Type of trigger - 'http' or 'pubsub' (String, required)
  *   topicName              : PubSub topic name (required if triggerType is 'pubsub')
- *   generation             : Cloud Function generation - 'gen1' or 'gen2' (String, required)
  *   memory                 : Memory allocation for the function (String, optional)
- *   concurrency            : Maximum number of concurrent requests (Integer, optional, gen2 only)
- *   cpu                    : CPU allocation for the function (Integer, optional, gen2 only)
+ *   concurrency            : Maximum number of concurrent requests (Integer, optional)
+ *   cpu                    : CPU allocation for the function (Integer, optional)
  *   ingress                : Ingress settings controlling what traffic can reach the function ('all' || 'internal-only' || 'internal-and-gclb', optional, default 'all')
  *   allowUnauthenticated   : If true this will allow all callers, without checking authentication (boolean, optional, default false)
+ *   version                : function version tag (string, required)
  */
 def call(Map config) {
     // Validate required parameters
@@ -36,9 +36,8 @@ def call(Map config) {
             'serviceAccountEmail',
             'runtime',
             'region',
-            'environmentVariables',
             'triggerType',
-            'generation'
+            'version'
     ]
     requiredParams.each { param ->
         if (!config.containsKey(param)) {
@@ -48,10 +47,6 @@ def call(Map config) {
 
     if (config.triggerType == 'pubsub' && !config.containsKey('topicName')) {
         error "Missing required parameter for PubSub trigger: topicName"
-    }
-
-    if (!['gen1', 'gen2'].contains(config.generation)) {
-        error "Invalid generation specified. Must be 'gen1' or 'gen2'."
     }
 
     if (!['all', 'internal-only', 'internal-and-gclb', null].contains(config.ingress)) {
@@ -96,20 +91,17 @@ def getGcloudPodYaml() {
 def deployFunction(Map config) {
     def deployCommand = "gcloud functions deploy ${config.functionName}"
 
-    if (config.generation == 'gen2') {
-        // Jenkins is very sensitive to indentation, so this snippet looks strange but it's correct
-        deployCommand += """ --gen2 \\
-        --concurrency ${config.concurrency ? config.concurrency : 1} \\
-        --cpu ${config.cpu ? config.cpu : 1} \\"""
-    } else {
-        // Have to explicitly set since gen2 is becoming the default
-        deployCommand += " --no-gen2 \\"
-    }
+
+    // Jenkins is very sensitive to indentation, so this snippet looks strange but it's correct
+    deployCommand += """ --gen2 \\
+    --concurrency ${config.concurrency ? config.concurrency : 1} \\
+    --cpu ${config.cpu ? config.cpu : 1} \\"""
 
     deployCommand += """
         --project ${config.projectId} \\
         --runtime ${config.runtime} \\
         --region ${config.region} \\
+        --update-labels version=${config.version} \\
         ${config.environmentVariables != null && !config.environmentVariables.isEmpty() ? "--set-env-vars " + config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',') : "" } \\
         --ingress-settings ${config.ingress != null ? config.ingress : 'all'} \\
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
