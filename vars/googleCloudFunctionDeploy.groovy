@@ -99,6 +99,7 @@ def deployFunction(Map config) {
         --concurrency ${config.concurrency ? config.concurrency : 1} \\
         --cpu ${config.cpu ? config.cpu : 1} \\
         --update-labels version=${config.version.replaceAll("\\.", "-")} \\
+        --service-account ${config.serviceAccountEmail} \\
         ${config.environmentVariables != null && !config.environmentVariables.isEmpty() ? "--set-env-vars " + config.environmentVariables.collect { "${it.key}=${it.value}" }.join(',') : "" } \\
         --ingress-settings ${config.ingress != null ? config.ingress : 'all'} \\
         ${config.entryPoint ? "--entry-point ${config.entryPoint}" : ''} \\
