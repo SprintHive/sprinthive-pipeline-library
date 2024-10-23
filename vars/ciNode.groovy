@@ -7,6 +7,7 @@ def call(Map parameters = [:], body) {
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
+    def terraformImage = parameters.get('terraformImage', 'hashicorp/terraform:1.6.6')
     def nodejsImage = parameters.get('nodejsImage', 'node:20-alpine')
     def inheritFrom = parameters.get('inheritFrom', 'default')
 
@@ -44,6 +45,14 @@ def call(Map parameters = [:], body) {
         args:
         - cat
         tty: true
+      - name: terraform
+        image: ${terraformImage}
+        command:
+        - cat
+        tty: true
+        resources:
+          requests:
+            memory: 128Mi
       - name: helm
         image: ${helmImage}
         env:
