@@ -15,7 +15,20 @@
  * @param config.skipDeploy: (Optional) Deployment will skip Helm Deploy stage
  * @return
  */
+
+
 def call(config) {
+  def imagesToPublish = config.additionalImageNames
+  imageNames.add(${config.application})
+
+  def sourceContainerImages = imageNames.collect { image ->
+    "eu.gcr.io/${config.sourceGcrProjectId}/${image}:${params.imageTag}"
+  }
+
+  def targetContainerImages = imageNames.collect { image ->
+    "eu.gcr.io/${config.targetGcrProjectId}/${image}:${params.imageTag}"
+  }
+
   sourceContainerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
   targetContainerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
@@ -88,11 +101,12 @@ def call(config) {
   }
 
   cdNode {
-    stage("Push image to ${config.targetGcrProjectId}") {
-      cranePull(sourceContainerImage, "container.tar")
-      cranePush(targetContainerImage, "container.tar")
+    for (image in imagesToPublish) {
+      stage("Push ${image} to ${config.targetGcrProjectId}") {
+        cranePull(image, "container.tar")
+        cranePush(image, "container.tar")
+      }
     }
-
     if (config.skipDeploy != true) {
       for (namespacePreProd in config.namespacesPreProd) {
         stage("Helm Deploy: $namespacePreProd") {
