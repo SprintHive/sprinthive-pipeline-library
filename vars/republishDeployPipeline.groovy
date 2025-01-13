@@ -15,9 +15,31 @@
  * @param config.skipDeploy: (Optional) Deployment will skip Helm Deploy stage
  * @return
  */
+
+
+class containerImage {
+    String name
+    String sourceRepoURL
+    String sourceRepoName
+    String destinationRepoURL
+    String destinationRepoName
+}
+
 def call(config) {
-  sourceContainerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
-  targetContainerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
+  def imagesToPublish = []
+  imagesToPublish.add(config.application)
+  imagesToPublish.addAll(config.additionalImageNames ?: [])
+
+  // Note: We expect all images to have the same tags, this will likely have to be expended on in the future
+  def containerImages = imagesToPublish.collect { image ->
+    new containerImage(
+      name: image, 
+      sourceRepoURL: "eu.gcr.io/${config.sourceGcrProjectId}/${image}:${params.imageTag}",
+      sourceRepoName: config.sourceGcrProjectId,
+      destinationRepoURL : "eu.gcr.io/${config.targetGcrProjectId}/${image}:${params.imageTag}",
+      destinationRepoName: config.targetGcrProjectId
+    )
+  }
 
   if (params.changeLog != null && !params.changeLog.isEmpty()) {
     println("Change log:")
@@ -88,9 +110,12 @@ def call(config) {
   }
 
   cdNode {
-    stage("Push image to ${config.targetGcrProjectId}") {
-      cranePull(sourceContainerImage, "container.tar")
-      cranePush(targetContainerImage, "container.tar")
+    
+    for (image in containerImages) {
+      stage("Promote Docker Image: ${image.name} to ${image.destinationRepoName}") {
+        cranePull(image.sourceRepoURL, "container.tar")
+        cranePush(image.destinationRepoURL, "container.tar")
+      }
     }
 
     if (config.skipDeploy != true) {
