@@ -17,20 +17,29 @@
  */
 
 
+class containerImage {
+    String name
+    String sourceRepoURL
+    String sourceRepoName
+    String destinationRepoURL
+    String destinationRepoName
+}
+
 def call(config) {
-  def imagesToPublish = config.additionalImageNames
-  imageNames.add(${config.application})
+  def imagesToPublish = []
+  imagesToPublish.add(config.application)
+  imagesToPublish.addAll(config.additionalImageNames ?: [])
 
-  def sourceContainerImages = imageNames.collect { image ->
-    "eu.gcr.io/${config.sourceGcrProjectId}/${image}:${params.imageTag}"
+  // Note: We expect all images to have the same tags, this will likely have to be expended on in the future
+  def containerImages = imagesToPublish.collect { image ->
+    new containerImage(
+      name: image, 
+      sourceRepoURL: "eu.gcr.io/${config.sourceGcrProjectId}/${image}:${params.imageTag}",
+      sourceRepoName: config.sourceGcrProjectId,
+      destinationRepoURL : "eu.gcr.io/${config.targetGcrProjectId}/${image}:${params.imageTag}",
+      destinationRepoName: config.targetGcrProjectId
+    )
   }
-
-  def targetContainerImages = imageNames.collect { image ->
-    "eu.gcr.io/${config.targetGcrProjectId}/${image}:${params.imageTag}"
-  }
-
-  sourceContainerImage  = "eu.gcr.io/${config.sourceGcrProjectId}/${config.application}:${params.imageTag}"
-  targetContainerImage  = "eu.gcr.io/${config.targetGcrProjectId}/${config.application}:${params.imageTag}"
 
   if (params.changeLog != null && !params.changeLog.isEmpty()) {
     println("Change log:")
@@ -101,12 +110,14 @@ def call(config) {
   }
 
   cdNode {
-    for (image in imagesToPublish) {
-      stage("Push ${image} to ${config.targetGcrProjectId}") {
-        cranePull(image, "container.tar")
-        cranePush(image, "container.tar")
+    
+    for (image in containerImages) {
+      stage("Promote Docker Image: ${image.name} to ${image.destinationRepoName}") {
+        cranePull(image.sourceRepoURL, "container.tar")
+        cranePush(image.destinationRepoURL, "container.tar")
       }
     }
+
     if (config.skipDeploy != true) {
       for (namespacePreProd in config.namespacesPreProd) {
         stage("Helm Deploy: $namespacePreProd") {
