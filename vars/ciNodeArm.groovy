@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('ciNode'))
-    def arch = parameters.get('arch', 'arm64')
+    def arch = parameters.get('arch', 'amd64')
     def buildArm = arch == 'arm64' ? true : false
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
     def grypeScannerImage = parameters.get('grypeScannerImage', buildArm ? 'anchore/grype:debug-arm64v8' : 'anchore/grype:debug')
