@@ -1,8 +1,8 @@
 #!/usr/bin/groovy
 def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('ciNode'))
-    def imageArch = parameters.get('imageArch', 'arm64')
-    def buildArm = imageArch == 'arm64' ? true : false
+    def arch = parameters.get('arch', 'arm64')
+    def buildArm = arch == 'arm64' ? true : false
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
     def grypeScannerImage = parameters.get('grypeScannerImage', buildArm ? 'anchore/grype:debug-arm64v8' : 'anchore/grype:debug')
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
@@ -22,7 +22,7 @@ def call(Map parameters = [:], body) {
         sh_arch: "arm"
     """
     echo "Starting CI node"
-    echo "Building for: ${imageArch}"
+    echo "Building for: ${arch}"
 
     podTemplate(inheritFrom: "${inheritFrom}", yaml: """
     apiVersion: v1
