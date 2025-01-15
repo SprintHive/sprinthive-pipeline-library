@@ -71,6 +71,7 @@ def call(config) {
         stage('Build Java container image') {
             versionTag = "${appVersion}-${shortCommitSha}"
             kanikoBuild(javaContextDirectory, "container-java.tar", "${containerImageTaglessJava}:${versionTag}", scmInfo.GIT_COMMIT)
+            kanikoBuildArm(javaContextDirectory, "container-java.tar", "${containerImageTaglessJava}:${versionTag}-arm", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
@@ -81,12 +82,14 @@ def call(config) {
 
         stage('Push container image: Java') {
             cranePush("${containerImageTaglessJava}:${versionTag}", "container-java.tar")
+            cranePush("${containerImageTaglessJava}:${versionTag}-arm", "container-java.tar")
             cranePush("${containerImageTaglessJava}:${envInfo.branch}", "container-java.tar")
         }
 
         stage('Build Python container image') {
             versionTag = "${appVersion}-${shortCommitSha}"
             kanikoBuild(pythonContextDirectory, "container-python.tar", "${containerImageTaglessPython}:${versionTag}", scmInfo.GIT_COMMIT)
+            kanikoBuildArm(pythonContextDirectory, "container-python.tar", "${containerImageTaglessPython}:${versionTag}-arm", scmInfo.GIT_COMMIT)
         }
 
         if (config.containerScanEnabled != false) {
@@ -97,6 +100,7 @@ def call(config) {
 
         stage('Push container image: Python') {
             cranePush("${containerImageTaglessPython}:${versionTag}", "container-python.tar")
+            cranePush("${containerImageTaglessPython}:${versionTag}-arm", "container-python.tar")
             cranePush("${containerImageTaglessPython}:${envInfo.branch}", "container-python.tar")
         }
     }
