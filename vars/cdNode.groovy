@@ -18,7 +18,7 @@ def call(Map parameters = [:], body) {
           value: "arm64"
           effect: NoSchedule      
       nodeSelector:
-        sprinthive.com/arch: "arm"
+        sprinthive.com/instance-type: "c4a"
         containers:
         - name: crane
           image: ${craneImage}
