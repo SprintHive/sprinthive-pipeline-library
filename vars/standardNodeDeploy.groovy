@@ -17,7 +17,8 @@ def call(config) {
         stage('Build distribution') {
             versionTag = getNewVersion{}
             container(name: "nodejs") {
-                versionTag = "${nodeAppVersion()}-${versionTag}-${arch}"
+                appVersion = nodeAppVersion()
+                versionTag = "${appVersion}-${versionTag}-${arch}"
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
