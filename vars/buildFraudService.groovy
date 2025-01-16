@@ -10,7 +10,9 @@ def call(config) {
     def containerImageTaglessJava = "${config.dockerTagBase}/${config.javaComponentName}".toString()
     def containerImageTaglessPython = "${config.dockerTagBase}/${config.pythonComponentName}".toString()
     def arch = config.arch ? config.arch : "amd64"
-    ciNodeArm(config.nodeParameters != null ? config.nodeParameters + ['arch': arch] : [:]) {
+    config.nodeParameters = config.nodeParameters + ['arch': arch]
+
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         shortCommitSha = getNewVersion{}
