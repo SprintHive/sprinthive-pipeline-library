@@ -4,8 +4,10 @@ def call(config) {
     def versionTag = ''
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
     def targetNamespace
+    def arch = config.arch ? config.arch : "amd64"
+    config.nodeParameters = config.nodeParameters + ['arch': arch]
 
-    ciNode {
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         targetNamespace = envInfo.deployStage
@@ -15,7 +17,7 @@ def call(config) {
         stage('Build distribution') {
             versionTag = getNewVersion{}
             container(name: "nodejs") {
-                versionTag = "${nodeAppVersion()}-${versionTag}"
+                versionTag = "${nodeAppVersion()}-${versionTag}-${arch}"
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
