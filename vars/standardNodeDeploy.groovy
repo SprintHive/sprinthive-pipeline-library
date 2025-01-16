@@ -4,8 +4,8 @@ def call(config) {
     def versionTag = ''
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
     def targetNamespace
-    def arch = config.arch ? config.arch : "amd64"
-    config.nodeParameters = config.nodeParameters + ['arch': arch]
+    def arch = config.arch ?: "amd64" 
+    config.nodeParameters += [arch: arch]
 
     ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
@@ -18,6 +18,7 @@ def call(config) {
             versionTag = getNewVersion{}
             container(name: "nodejs") {
                 appVersion = nodeAppVersion()
+                versionTag = "${appVersion}-${shortCommitSha}-${arch}"
                 versionTag = "${appVersion}-${versionTag}-${arch}"
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "yarn && yarn install --production"
                 sh """
