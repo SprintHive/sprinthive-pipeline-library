@@ -19,7 +19,7 @@ def call(Map parameters = [:], body) {
           effect: NoSchedule
     """
     def armNodeSelector = """
-        sh_arch: "arm"
+        sprinthive.com/arch: "arm"
     """
     echo "Starting CI node"
     echo "Building for: ${arch}"
