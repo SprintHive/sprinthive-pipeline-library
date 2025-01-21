@@ -16,10 +16,6 @@ def call(Map parameters = [:], body) {
           - key: kubernetes.io/arch
             operator: Equal
             value: "arm64"
-            effect: NoSchedule    
-          - key: sprinthive.com/purpose
-            operator: Equal
-            value: "sh-services"
             effect: NoSchedule     
         nodeSelector:
           sprinthive.com/instance-type: "c4a"
