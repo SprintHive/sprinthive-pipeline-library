@@ -12,17 +12,6 @@ def call(Map parameters = [:], body) {
       apiVersion: v1
       kind: Pod
       spec:
-        tolerations:
-          - key: kubernetes.io/arch
-            operator: Equal
-            value: "arm64"
-            effect: NoSchedule    
-          - key: sprinthive.com/purpose
-            operator: Equal
-            value: "sh-services"
-            effect: NoSchedule     
-        nodeSelector:
-          sprinthive.com/instance-type: "c4a"
         containers:
         - name: crane
           image: ${craneImage}
