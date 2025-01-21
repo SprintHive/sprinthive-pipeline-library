@@ -9,6 +9,8 @@ def call(config) {
     def targetNamespace
     def containerImageTaglessJava = "${config.dockerTagBase}/${config.javaComponentName}".toString()
     def containerImageTaglessPython = "${config.dockerTagBase}/${config.pythonComponentName}".toString()
+    def arch = config.arch ? config.arch : "amd64"
+    config.nodeParameters = config.nodeParameters + ['arch': arch]
 
     ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
@@ -69,7 +71,7 @@ def call(config) {
         }
 
         stage('Build Java container image') {
-            versionTag = "${appVersion}-${shortCommitSha}"
+            versionTag = "${appVersion}-${shortCommitSha}-${arch}"
             kanikoBuild(javaContextDirectory, "container-java.tar", "${containerImageTaglessJava}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
@@ -85,7 +87,7 @@ def call(config) {
         }
 
         stage('Build Python container image') {
-            versionTag = "${appVersion}-${shortCommitSha}"
+            versionTag = "${appVersion}-${shortCommitSha}-${arch}"
             kanikoBuild(pythonContextDirectory, "container-python.tar", "${containerImageTaglessPython}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 

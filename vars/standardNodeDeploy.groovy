@@ -4,8 +4,10 @@ def call(config) {
     def versionTag = ''
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
     def targetNamespace
+    def arch = config.arch ?: "amd64" 
+    config.nodeParameters += [arch: arch]
 
-    ciNode {
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         targetNamespace = envInfo.deployStage

@@ -4,14 +4,17 @@ def call(config) {
     def versionTag = ''
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
 
-    ciNode {
+    def arch = config.arch ?: "amd64" 
+    config.nodeParameters += [arch: arch]
+
+    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         echo "Current branch is: ${envInfo.branch}"
         echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Build container image') {
-            versionTag = getNewVersion{}
+            versionTag = "${getNewVersion{}}-${arch}}"
             kanikoBuild(env.WORKSPACE, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
