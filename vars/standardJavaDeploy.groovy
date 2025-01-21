@@ -9,9 +9,10 @@ def call(config) {
     def targetNamespace
     def containerImageTagless = "${config.dockerTagBase}/${config.componentName}".toString()
     def arch = config.arch ?: "amd64" 
-    config.nodeParameters += [arch: arch]
+    nodeParameters = config.nodeParameters ?: [:]  
+    nodeParameters += [arch: arch]
 
-    ciNode(config.nodeParameters != null ? config.nodeParameters : [:]) {
+    ciNode(nodeParameters) {
         def scmInfo = checkout scm
         def envInfo = environmentInfo(scmInfo)
         shortCommitSha = getNewVersion{}
