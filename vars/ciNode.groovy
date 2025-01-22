@@ -47,6 +47,17 @@ def call(Map parameters = [:], body) {
         tty: true
       - name: terraform
         image: ${terraformImage}
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: terraform-dev-aws-credentials
+              key: accessKey
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: terraform-dev-aws-credentials
+              key: secretKey
         command:
         - cat
         tty: true
