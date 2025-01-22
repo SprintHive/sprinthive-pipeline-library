@@ -1,21 +1,37 @@
 #!/usr/bin/groovy
 def call(Map parameters = [:], body) {
     def label = parameters.get('label', buildId('ciNode'))
-
+    def arch = parameters.get('arch', 'amd64')
+    def buildArm = arch == 'arm64' ? true : false
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
-    def grypeScannerImage = parameters.get('grypeScannerImage', 'anchore/grype:debug')
+    def grypeScannerImage = parameters.get('grypeScannerImage', buildArm ? 'anchore/grype:debug-arm64v8' : 'anchore/grype:debug')
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
-    def helmImage = parameters.get('helmImage', 'quay.io/roboll/helmfile:v0.144.0')
+    def helmImage = parameters.get('helmImage', 'ghcr.io/helmfile/helmfile:v0.155.1')
     def nodejsImage = parameters.get('nodejsImage', 'node:20-alpine')
     def inheritFrom = parameters.get('inheritFrom', 'default')
 
+
+    def armTolerations = """
+        - key: kubernetes.io/arch
+          operator: Equal
+          value: "arm64"
+          effect: NoSchedule
+    """
+    def armNodeSelector = """
+        sprinthive.com/instance-type: "c4a"
+    """
     echo "Starting CI node"
+    echo "Building for: ${arch}"
 
     podTemplate(label: label, inheritFrom: "${inheritFrom}", yaml: """
     apiVersion: v1
     kind: Pod
     spec:
+      tolerations:
+        ${buildArm ? armTolerations : ''}
+      nodeSelector:
+        ${buildArm ? armNodeSelector : ''}
       containers:
       - name: kaniko
         image: ${kanikoImage}
@@ -49,8 +65,13 @@ def call(Map parameters = [:], body) {
         env:
         - name: HELM_HOME
           value: /tmp
+        entrypoint:
+        - ['/bin/sh']
         command:
-        - cat
+        - sleep
+        args:
+        - infinity
+
         tty: true
         resources:
           requests:
