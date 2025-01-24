@@ -60,7 +60,7 @@ def call(Map parameters = [:], body) {
               key: secretKey
         volumeMounts:
         - name: ssh-config
-          mountPath: "/home/.ssh/"
+          mountPath: "/root/.ssh/"
           readOnly: true
         command:
         - cat
