@@ -60,7 +60,7 @@ def call(Map parameters = [:], body) {
               key: secretKey
         volumeMounts:
         - name: ssh-config
-          mountPath: "/"
+          mountPath: "/dump/"
         command:
         - cat
         tty: true
