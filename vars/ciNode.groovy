@@ -59,8 +59,8 @@ def call(Map parameters = [:], body) {
               name: terraform-dev-aws-credentials
               key: secretKey
         volumeMounts:
-        - name: ssh-key
-          mountPath: "/"
+        - name: ssh-config
+          mountPath: "/home/.ssh/"
           readOnly: true
         command:
         - cat
@@ -103,9 +103,9 @@ def call(Map parameters = [:], body) {
         configMap:
           name: jenkins-maven-settings
           optional: true
-      - name: ssh-key
+      - name: ssh-config
         secret:
-          secretName: terraform-bitbucket-ssh
+          secretName: jenkins-ssh-config
     """
     ) {
         node(label) {
