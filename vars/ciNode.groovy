@@ -61,7 +61,6 @@ def call(Map parameters = [:], body) {
         volumeMounts:
         - name: ssh-config
           mountPath: "/root/.ssh/"
-          readOnly: true
         command:
         - cat
         tty: true
