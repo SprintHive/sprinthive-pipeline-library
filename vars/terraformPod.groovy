@@ -20,7 +20,7 @@ def call(Map parameters = [:], body) {
     echo "Starting CI node"
     echo "Building for: ${arch}"
 
-    podTemplate(label: label, inheritFrom: "${inheritFrom}", yaml: """
+    podTemplate(serviceAccount: "terraform",label: label, inheritFrom: "${inheritFrom}", yaml: """
     apiVersion: v1
     kind: Pod
     spec:
