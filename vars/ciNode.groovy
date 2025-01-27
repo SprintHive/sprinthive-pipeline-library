@@ -62,7 +62,9 @@ def call(Map parameters = [:], body) {
         - name: ssh-config
           mountPath: "/dump/"
         entrypoint:
-        - /bin/cat
+        - /bin/busybox
+        command:
+        - cat
         tty: true
         resources:
           requests:
