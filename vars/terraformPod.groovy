@@ -23,8 +23,8 @@ def call(Map parameters = [:], body) {
     podTemplate(label: label, inheritFrom: "${inheritFrom}", yaml: """
     apiVersion: v1
     kind: Pod
-    ServiceAccount: Terraform
     spec:
+      serviceAccountName: terraform
       tolerations:
         ${buildArm ? armTolerations : ''}
       nodeSelector:
