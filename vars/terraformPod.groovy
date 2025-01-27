@@ -4,6 +4,7 @@ def call(Map parameters = [:], body) {
     def arch = parameters.get('arch', 'amd64')
     def buildArm = arch == 'arm64' ? true : false
     def terraformImage = parameters.get('terraformImage', 'europe-west1-docker.pkg.dev/sh-qa-00/dev-containers/terraform-deploy:0.4')
+    def inheritFrom = parameters.get('inheritFrom', 'default')
 
 
 
