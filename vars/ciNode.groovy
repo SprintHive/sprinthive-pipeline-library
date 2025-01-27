@@ -61,8 +61,8 @@ def call(Map parameters = [:], body) {
         volumeMounts:
         - name: ssh-config
           mountPath: "/dump/"
-        command:
-        - cat
+        entrypoint:
+        - /bin/cat
         tty: true
         resources:
           requests:
