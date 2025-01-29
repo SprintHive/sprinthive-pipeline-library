@@ -15,7 +15,7 @@ def call(config) {
         echo "Deploy namespace is: ${envInfo.deployStage}"
 
         stage('Build container image') {
-            versionTag = "${getNewVersion{}}-${arch}}"
+            versionTag = "${getNewVersion{}}-${arch}"
             kanikoBuild(env.WORKSPACE, "container.tar", "${containerImageTagless}:${versionTag}", scmInfo.GIT_COMMIT)
         }
 
