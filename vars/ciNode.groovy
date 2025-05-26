@@ -66,7 +66,7 @@ def call(Map parameters = [:], body) {
         - name: HELM_HOME
           value: /tmp
         entrypoint:
-        - ['/bin/sh']
+        - /bin/sh
         command:
         - sleep
         args:
