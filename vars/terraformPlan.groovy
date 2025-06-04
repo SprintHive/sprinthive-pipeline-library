@@ -5,7 +5,7 @@ def call(config) {
         checkout([
             $class: 'GitSCM',
             branches: [[name: 'dev']],
-            userRemoteConfigs: [[credentialsId: 'bitbucket', url: '${config.GIT_URL}']]
+            userRemoteConfigs: [[credentialsId: 'bitbucket', url: config.GIT_URL]]
     ])
 
         container('terraform') {
