@@ -8,10 +8,20 @@ def call(config) {
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: config.GIT_URL]]
     ])
 
+        def targetArguments = []
+        if (params.TF_TARGETTED_RESOURCES) {
+            params.TF_TARGETTED_RESOURCES.eachLine { line ->
+                def trimmedLine = line.trim()
+                if (trimmedLine) {
+                    targetArguments << "--target=${trimmedLine}"
+                }
+            }
+        }
+
         container('terraform') {
             stage('Terraform Plan') {
                 sh script: 'mkdir ~/.ssh/ && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config'
-                sh script: "cd ${config.TF_DIRECTORY} && terraform init && vault login -no-print --method gcp role=terraform-dev  && terraform workspace select ${params.TF_WORKSPACE_EXPLICIT} && terraform plan -out plan.tfplan --target=${params.TARGETTED_RESOURCES}"
+                sh script: "cd ${config.TF_DIRECTORY} && terraform init && vault login -no-print --method gcp role=terraform-dev  && terraform workspace select ${params.TF_WORKSPACE_EXPLICIT} && terraform plan -out plan.tfplan ${targetArguments}"
             //archiveArtifacts artifacts: 'plan.tfplan', fingerprint: true
             }
             stage('Terraform Apply') {
