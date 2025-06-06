@@ -13,7 +13,8 @@ def call(config) {
         }
         def targetArguments = []
         if (config.TF_TARGETTED_RESOURCES) {
-            config.TF_TARGETTED_RESOURCES.eachLine { line ->
+            def lines = config.TF_TARGETTED_RESOURCES.readLines()
+            lines.each { line ->
                 def trimmedLine = line.trim()
                 if (trimmedLine) {
                     targetArguments << "--target=${trimmedLine}"
