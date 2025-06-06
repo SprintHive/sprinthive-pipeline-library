@@ -19,7 +19,7 @@ def call(config) {
         }
 
         container('terraform') {
-            for (workspace in params.targetWorkspaces) {
+            for (workspace in params.targetWorkspaces.readLines()) {
                 stage("Terraform Plan: ${workspace}") {
                   sh script: 'mkdir ~/.ssh/ && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config'
                   sh script: "cd ${config.TF_DIRECTORY} && terraform init && vault login -no-print --method gcp role=terraform-dev  && terraform workspace select ${workspace} && terraform plan -out ${workspace}-plan.tfplan ${targetArguments.join(' ')}"
