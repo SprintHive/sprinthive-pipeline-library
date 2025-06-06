@@ -27,7 +27,7 @@ def call(config) {
             for (workspace in targetWorkspaces) {
                 stage("Terraform Plan: ${workspace}") {
                     
-                    script: "(cd ${config.TF_DIRECTORY} && terraform init && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}) | tee -a logs/plans/${workspace}.log"
+                    script: "cd ${config.TF_DIRECTORY} && terraform init && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')} | tee -a logs/plans/${workspace}.log"
 
                     archiveArtifacts artifacts: "${config.TF_DIRECTORY}/logs/plans/${workspace}.log", fingerprint: true
                     archiveArtifacts artifacts: "${config.TF_DIRECTORY}/plans/${workspace}.tfplan", fingerprint: true
