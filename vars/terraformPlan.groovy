@@ -23,10 +23,17 @@ def call(config) {
         }
 
         container('terraform') {
-            sh script: "mkdir ~/.ssh/ ${config.TF_DIRECTORY}/plans && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config"
+            sh script: "vault login -no-print --method gcp role=terraform-dev  && mkdir ~/.ssh/ ${config.TF_DIRECTORY}/logs ${config.TF_DIRECTORY}/plans && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config"
             for (workspace in targetWorkspaces) {
                 stage("Terraform Plan: ${workspace}") {
-                  sh script: "cd ${config.TF_DIRECTORY} && terraform init && vault login -no-print --method gcp role=terraform-dev  && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}"
+                  def planOutput = sh( 
+                    script: "cd ${config.TF_DIRECTORY} && terraform init && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}",
+                    returnStdout: true
+                    )
+                writeFile(
+                  file: "${config.TF_DIRECTORY}/logs/${workspace}-plan-output.txt",
+                  text: planOutput
+                )
                   archiveArtifacts artifacts: "${config.TF_DIRECTORY}/plans/${workspace}.tfplan", fingerprint: true
                 }
                 stage("Terraform Apply: ${workspace}") {
