@@ -27,7 +27,7 @@ def call(config) {
                 }
                 stage("Terraform Apply: ${workspace}") {
                   input message: 'Review the Terraform plan. Proceed with apply?', ok: 'Apply', cancel: 'Abort'
-                  sh script: "cd ${config.TF_DIRECTORY} && terraform workspace select ${config.TF_WORKSPACE_EXPLICIT} && terraform apply ${workspace}-plan.tfplan"
+                  sh script: "cd ${config.TF_DIRECTORY} && terraform workspace select ${workspace} && terraform apply plans/${workspace}-plan.tfplan"
                 }
             }
 
