@@ -7,7 +7,10 @@ def call(config) {
             branches: [[name: 'dev']],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: params.GIT_URL]]
     ])
-        
+        def targetWorkspaces = params.targetWorkspaces.readLines()
+        if (targetWorkspaces.size <= 0) {
+            error "No Workspaces were specified"
+        }
         def targetArguments = []
         if (config.TF_TARGETTED_RESOURCES) {
             config.TF_TARGETTED_RESOURCES.eachLine { line ->
@@ -19,9 +22,10 @@ def call(config) {
         }
 
         container('terraform') {
-            for (workspace in params.targetWorkspaces.readLines()) {
+            for (workspace in targetWorkspaces) {
+                sh script: 'mkdir ~/.ssh/ && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config'
+
                 stage("Terraform Plan: ${workspace}") {
-                  sh script: 'mkdir ~/.ssh/ && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config'
                   sh script: "cd ${config.TF_DIRECTORY} && mkdir plans && terraform init && vault login -no-print --method gcp role=terraform-dev  && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}"
                   archiveArtifacts artifacts: "${config.TF_DIRECTORY}/plans/${workspace}.tfplan", fingerprint: true
                 }
