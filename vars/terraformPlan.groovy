@@ -23,18 +23,14 @@ def call(config) {
         }
 
         container('terraform') {
-            sh script: "vault login -no-print --method gcp role=terraform-dev  && mkdir ~/.ssh/ ${config.TF_DIRECTORY}/logs ${config.TF_DIRECTORY}/plans && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config"
+            sh script: "vault login -no-print --method gcp role=terraform-dev  && mkdir -p ~/.ssh/ ${config.TF_DIRECTORY}/logs/plans ${config.TF_DIRECTORY}/plans && cp /dump/id_rsa ~/.ssh/id_rsa && chmod 0600 ~/.ssh/id_rsa && cp /dump/known_hosts ~/.ssh/known_hosts && cp /dump/config ~/.ssh/config"
             for (workspace in targetWorkspaces) {
                 stage("Terraform Plan: ${workspace}") {
-                  def planOutput = sh( 
-                    script: "cd ${config.TF_DIRECTORY} && terraform init && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}",
-                    returnStdout: true
-                    )
-                writeFile(
-                  file: "${config.TF_DIRECTORY}/logs/${workspace}-plan-output.txt",
-                  text: planOutput
-                )
-                  archiveArtifacts artifacts: "${config.TF_DIRECTORY}/plans/${workspace}.tfplan", fingerprint: true
+                    // TODO: Consider if below should be def'd
+                    script: "sh -c \"cd ${config.TF_DIRECTORY} && terraform init && terraform workspace select ${workspace} && terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')}\" | tee -a ${config.TF_DIRECTORY}/logs/plans/${workspace}.log"
+                    
+                    archiveArtifacts artifacts: "${config.TF_DIRECTORY}/logs/plans/${workspace}.log", fingerprint: true
+                    archiveArtifacts artifacts: "${config.TF_DIRECTORY}/plans/${workspace}.tfplan", fingerprint: true
                 }
                 stage("Terraform Apply: ${workspace}") {
                   input message: 'Review the Terraform plan. Proceed with apply?', ok: 'Apply', cancel: 'Abort'
