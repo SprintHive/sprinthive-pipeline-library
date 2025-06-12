@@ -6,6 +6,6 @@ def call(imageName, contextDir) {
         additionalOptions += "-c $contextDir/grype.yaml"
     }
     container('grype-scanner') {
-        sh "sleep 100000 && /grype $imageName --fail-on high $additionalOptions"
+        sh "/grype $imageName --fail-on high $additionalOptions"
     }
 }

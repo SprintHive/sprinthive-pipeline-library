@@ -28,6 +28,8 @@ def call(Map parameters = [:], body) {
     apiVersion: v1
     kind: Pod
     spec:
+      securityContext:
+        supplementalGroups: [1000]
       tolerations:
         ${buildArm ? armTolerations : ''}
       nodeSelector:
