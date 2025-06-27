@@ -4,7 +4,7 @@ def call(config) {
     terraformPod(['arch':'arm64']) {
         checkout([
             $class: 'GitSCM',
-            branches: [[name: 'dev']],
+            branches: [[name: 'dev-cicd']],
             userRemoteConfigs: [[credentialsId: 'bitbucket', url: params.GIT_URL]]
     ])
         def targetWorkspaces = params.targetWorkspaces.readLines()
