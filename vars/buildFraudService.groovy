@@ -11,7 +11,9 @@ def call(config) {
     def containerImageTaglessPython = "${config.dockerTagBase}/${config.pythonComponentName}".toString()
     def arch = config.arch ? config.arch : "amd64"
     nodeParameters = config.nodeParameters ?: [:]  
-    nodeParameters += [arch: arch]
+    nodeParameters += [
+        arch: arch
+    ]
 
     ciNode(nodeParameters) {
         def scmInfo = checkout scm
