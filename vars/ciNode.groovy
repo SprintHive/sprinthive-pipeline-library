@@ -17,6 +17,10 @@ def call(Map parameters = [:], body) {
           operator: Equal
           value: "arm64"
           effect: NoSchedule
+        - key: sprinthive.com/purpose
+          operator: Equal
+          value: "sh-services"
+          effect: NoSchedule
     """
     def armNodeSelector = """
         sprinthive.com/instance-type: "c4a"
