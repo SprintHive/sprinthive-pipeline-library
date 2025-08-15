@@ -35,7 +35,7 @@ void call(Map config) {
             for (workspace in targetWorkspaces) {
                 stage("Terraform Plan: ${workspace}") {
                     sh script: """
-                      terraform workspace select ${workspace} && \\
+                      cd ${config.TF_DIRECTORY} && terraform workspace select ${workspace} && \\
                       terraform plan -out plans/${workspace}.tfplan ${targetArguments.join(' ')} \\
                       | tee -a logs/plans/${workspace}.log
                     """
@@ -45,6 +45,7 @@ void call(Map config) {
                 stage("Terraform Apply: ${workspace}") {
                     input message: 'Review the Terraform plan. Proceed with apply?', ok: 'Apply', cancel: 'Abort'
                     sh script: """
+                      cd ${config.TF_DIRECTORY} && \\
                       terraform workspace select ${workspace} && \\
                       terraform apply plans/${workspace}.tfplan \\
                       | tee -a logs/plans/${workspace}.log
