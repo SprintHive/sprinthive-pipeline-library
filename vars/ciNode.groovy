@@ -8,7 +8,6 @@ def call(Map parameters = [:], body) {
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'ghcr.io/helmfile/helmfile:v0.155.1')
-    def terraformImage = parameters.get('terraformImage', 'europe-west1-docker.pkg.dev/sh-qa-00/dev-containers/terraform-cicd')
     def nodejsImage = parameters.get('nodejsImage', 'node:20-alpine')
     def inheritFrom = parameters.get('inheritFrom', 'default')
 
@@ -61,26 +60,6 @@ def call(Map parameters = [:], body) {
         args:
         - cat
         tty: true
-      - name: terraform
-        image: ${terraformImage}
-        env:
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: terraform-dev-aws-credentials
-              key: accessKey
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: terraform-dev-aws-credentials
-              key: secretKey
-        volumeMounts:
-        - name: ssh-config
-          mountPath: "/dump/"
-        tty: true
-        resources:
-          requests:
-            memory: 128Mi
       - name: helm
         image: ${helmImage}
         env:
