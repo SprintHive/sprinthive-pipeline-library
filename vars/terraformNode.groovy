@@ -32,7 +32,6 @@ def call(Map parameters = [:], body) {
       containers:
       - name: terraform
         image: ${terraformImage}
-        
         env:
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
