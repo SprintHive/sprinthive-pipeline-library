@@ -1,7 +1,7 @@
 #!/usr/bin/groovy
 
 void call(Map config) {
-    terraformPod(['arch':'arm64']) {
+    terraformNode(['arch':'arm64']) {
         checkout([
             $class: 'GitSCM',
             branches: [[name: 'dev-cicd']],
