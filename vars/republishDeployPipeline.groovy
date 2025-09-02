@@ -67,6 +67,7 @@ def call(config) {
     }
 
     if (config.integrationTest.runTest) {
+        config.integrationTest.application = config.application
         config.integrationTest.namespace = "integ-test"
         integTest(config.integrationTest)
     }
