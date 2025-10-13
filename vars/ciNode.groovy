@@ -10,7 +10,7 @@ def call(Map parameters = [:], body) {
     def helmImage = parameters.get('helmImage', 'ghcr.io/helmfile/helmfile:v0.155.1')
     def nodejsImage = parameters.get('nodejsImage', 'node:20-alpine')
     def inheritFrom = parameters.get('inheritFrom', 'default')
-def kanikoMemoryRequest = parameters.get('kanikoMemoryRequest', '128Mi')
+    def kanikoMemRequest = parameters.get('kanikoMemoryRequest', '128Mi')
 
 
     def armTolerations = """
@@ -47,7 +47,7 @@ def kanikoMemoryRequest = parameters.get('kanikoMemoryRequest', '128Mi')
         tty: true
         resources:
           requests:
-            memory: ${kanikoMemoryRequest}
+            memory: ${kanikoMemRequest}
       - name: crane
         image: ${craneImage}
         command:
