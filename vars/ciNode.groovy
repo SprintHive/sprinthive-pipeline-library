@@ -11,7 +11,6 @@ def call(Map parameters = [:], body) {
     def nodejsImage = parameters.get('nodejsImage', 'node:20-alpine')
     def inheritFrom = parameters.get('inheritFrom', 'default')
     def kanikoMemoryRequest = parameters.get('kanikoMemoryRequest', '128Mi')
-    def kanikoMemoryLimit = parameters.get('kanikoMemoryLimit', kanikoMemoryRequest)
 
 
     def armTolerations = """
@@ -49,8 +48,6 @@ def call(Map parameters = [:], body) {
         resources:
           requests:
             memory: ${kanikoMemoryRequest}
-          limits:
-            memory: ${kanikoMemoryLimit}
       - name: crane
         image: ${craneImage}
         command:
