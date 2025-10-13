@@ -67,37 +67,9 @@ def call(config) {
     }
 
     if (config.integrationTest.runTest) {
-        stage("Integration test") {
-          node {
-            checkout([
-                $class: 'GitSCM',
-                branches: [[name: config.integrationTest.branch]],
-                extensions: [[$class: 'GitLFSPull']],
-                userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
-            ])
-            podTemplateYaml = readFile("jenkins/integration-test-pod.yaml")
-            podLabel = "integ-test-${config.application}-${UUID.randomUUID().toString()}"
-            podTemplate(yaml: podTemplateYaml, label: podLabel, namespace: "integ-test") {
-              node(podLabel) {
-                checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: config.integrationTest.branch]],
-                        extensions: [[$class: 'GitLFSPull']],
-                        userRemoteConfigs: [[credentialsId: 'bitbucket', url: "https://bitbucket.org/sprinthive/${config.integrationTest.repository}.git"]]
-                ])
-                container('test') {
-                  exports = []
-                  if (config.integrationTest.envVars != null) {
-                    config.integrationTest.envVars.each { envVar ->
-                      exports.add("${envVar.key}=${envVar.value}")
-                    }
-                  }
-                  sh "${exports.join(" ")} ./jenkins/integrationTest.sh"
-                }
-              }
-            }
-          }
-        }
+        config.integrationTest.application = config.application
+        config.integrationTest.namespace = "integ-test"
+        integTest(config.integrationTest)
     }
   }
 
