@@ -4,7 +4,7 @@ def call(Map parameters = [:], body) {
     def arch = parameters.get('arch', 'amd64')
     def buildArm = arch == 'arm64' ? true : false
     def gradleImage = parameters.get('gradleImage', 'gradle:5.1-jdk-alpine')
-    def grypeScannerImage = parameters.get('grypeScannerImage', buildArm ? 'anchore/grype:v0.92.2-debug-arm64v8' : 'anchore/grype:v0.92.2-debug')
+    def grypeScannerImage = parameters.get('grypeScannerImage', buildArm ? 'anchore/grype:v0.104.3-debug-arm64v8' : 'anchore/grype:v0.104.3-debug')
     def kanikoImage = parameters.get('kanikoImage', 'gcr.io/kaniko-project/executor:debug')
     def craneImage = parameters.get('craneImage', 'gcr.io/go-containerregistry/gcrane:debug')
     def helmImage = parameters.get('helmImage', 'ghcr.io/helmfile/helmfile:v0.155.1')
@@ -59,6 +59,8 @@ def call(Map parameters = [:], body) {
             memory: 128Mi
       - name: grype-scanner
         image: ${grypeScannerImage}
+        securityContext:
+          runAsUser: 0
         command:
         - busybox
         args:
