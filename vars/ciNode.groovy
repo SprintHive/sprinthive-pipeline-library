@@ -59,11 +59,12 @@ def call(Map parameters = [:], body) {
             memory: 128Mi
       - name: grype-scanner
         image: ${grypeScannerImage}
+        securityContext:
+          runAsUser: 0
         command:
-        - /busybox/sh
+        - busybox
         args:
-        - -c
-        - "cat"
+        - cat
         tty: true
       - name: helm
         image: ${helmImage}
