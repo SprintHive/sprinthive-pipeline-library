@@ -89,7 +89,8 @@ def call(config) {
 
         stage('Build Python container image') {
             versionTag = "${appVersion}-${shortCommitSha}-${arch}"
-            kanikoBuild(pythonContextDirectory, "container-python.tar", "${containerImageTaglessPython}:${versionTag}", scmInfo.GIT_COMMIT)
+            def pythonBuildArgs = (config.pythonBuildArgs ?: "").toString()
+            kanikoBuild(pythonContextDirectory, "container-python.tar", "${containerImageTaglessPython}:${versionTag}", scmInfo.GIT_COMMIT, pythonBuildArgs)
         }
 
         if (config.containerScanEnabled != false) {
