@@ -36,7 +36,7 @@ def call(config) {
 
         stage('Compile source: Java') {
             container(name: config.buildContainerOverride != null ? config.buildContainerOverride : 'gradle') {
-                appVersion = javaAppVersion()
+                appVersion = javaAppVersion(config.javaSubModuleName)
                 def buildCommand = config.buildCommandOverride != null ? config.buildCommandOverride : "gradle bootJar"
                 sh """
                     export ENV_STAGE=${envInfo.deployStage}
